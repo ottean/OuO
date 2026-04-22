@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZO的钱包为何总是空空</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* 苹果级极光毛玻璃质感 */
+    --glass-bg: rgba(255, 255, 255, 0.65); /* 更扎实的高级白 */
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-shadow: rgba(15, 23, 42, 0.04); 
+    --accent: #8b5cf6; /* 核心点缀色：高级紫罗兰 */
+    --text: #0f172a;   /* 极度锐利的深灰黑 */
+    --text-soft: #475569;
+    --text-muted: #94a3b8;
+    --radius: 22px;
+    --radius-sm: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: #FAFAFA; /* 极净珍珠白底色 */
+    min-height: 100vh;
+    color: var(--text);
+  }
+
+  /* 杀手锏：极光环境光晕，史诗级融合的弥散光 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12), transparent 30vw), /* 靛蓝 */
+      radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.12), transparent 30vw), /* 紫罗兰 */
+      radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.12), transparent 30vw);  /* 湖蓝 */
+    filter: blur(60px); /* 让光斑完全散开，形成极致的悬浮感 */
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 40px 16px 80px; }
+
+  /* ── Header ── */
+  header { margin-bottom: 28px; animation: fadeUp 0.5s ease both; }
+
+  .header-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 999px; padding: 5px 14px; font-size: 10.5px; font-weight: 600;
+    color: #7c3aed; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 10px;
+    backdrop-filter: blur(8px);
+  }
+
+  h1 { font-size: clamp(22px, 5vw, 32px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 5px; }
+  h1 span {
+    /* 极光渐变字 */
+    background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle { font-size: 13px; color: var(--text-soft); font-weight: 300; }
+
+  /* ── Collapsible form ── */
+  .form-wrapper { margin-bottom: 14px; animation: fadeUp 0.5s 0.06s ease both; }
+
+  .form-toggle-btn {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.9); border-radius: var(--radius);
+    cursor: pointer; transition: all 0.3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 4px 16px var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+  .form-toggle-btn:hover { background: rgba(255, 255, 255, 0.9); box-shadow: 0 6px 20px rgba(15,23,42,0.06); }
+  .form-wrapper.open .form-toggle-btn {
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom-color: rgba(148, 163, 184, 0.15);
+  }
+
+  .form-toggle-label { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--text); }
+  .form-toggle-label .plus-icon {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6); /* 紫蓝流体渐变 */
+    display: flex; align-items: center; justify-content: center; color: white;
+    font-size: 16px; line-height: 1; transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  }
+  .form-wrapper.open .plus-icon { transform: rotate(45deg); }
+  .form-toggle-right { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  .form-body {
+    max-height: 0; overflow: hidden;
+    /* 👇 完美解决白线问题：收起时不仅高度为0，彻底透明且无阴影，隐去所有痕迹 */
+    opacity: 0; visibility: hidden; box-shadow: none; border-color: transparent;
+    transition: max-height 0.36s cubic-bezier(.4,0,.2,1), opacity 0.2s, visibility 0.36s;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.8); border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .form-wrapper.open .form-body { 
+    max-height: 420px; 
+    /* 展开时浮现 */
+    opacity: 1; visibility: visible; 
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05); 
+    border-color: rgba(255, 255, 255, 0.9);
+    transition: max-height 0.36s cubic-bezier(.4,0,.2,1), opacity 0.4s, visibility 0s;
+  }
+
+  .form-inner { padding: 18px 20px 20px; }
+  .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .field-wrap { display: flex; flex-direction: column; gap: 5px; }
+  .field-wrap label { font-size: 9.5px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; padding-left: 2px; }
+
+  input {
+    background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: var(--radius-sm); padding: 10px 12px; font-family: 'Sora', sans-serif;
+    font-size: 13px; color: var(--text); outline: none; transition: all 0.2s; width: 100%;
+    box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.01); /* 内发光让输入框有深邃感 */
+  }
+  input::placeholder { color: var(--text-muted); font-size: 12px; font-weight: 300; }
+  input:focus {
+    border-color: rgba(139, 92, 246, 0.4); background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), inset 0 2px 4px rgba(15, 23, 42, 0.01);
+  }
+  .hint { font-size: 10px; color: var(--text-muted); padding-left: 2px; font-style: italic; }
+  .full-col { grid-column: 1 / -1; }
+
+  .btn-add {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, #6366f1, #a855f7); border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm); color: white; font-family: 'Sora', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  }
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(139, 92, 246, 0.35); }
+  .btn-add:active { transform: translateY(0); }
+
+  /* ── Toolbar ── */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 4px; animation: fadeUp 0.5s 0.12s ease both; }
+  .entry-count { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .entry-count strong { color: var(--text); font-weight: 600; }
+  .btn-sort {
+    display: flex; align-items: center; gap: 6px; padding: 7px 16px;
+    background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 999px; font-family: 'Sora', sans-serif; font-size: 11.5px; font-weight: 600;
+    color: var(--text-soft); cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px var(--glass-shadow);
+  }
+  .btn-sort:hover, .btn-sort.active { background: rgba(139, 92, 246, 0.08); color: #7c3aed; border-color: rgba(139, 92, 246, 0.2); }
+
+  /* ── Cards ── */
+  .cards-list { display: flex; flex-direction: column; gap: 12px; }
+  .model-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border); border-radius: var(--radius);
+    box-shadow: 0 4px 20px var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 1);
+    overflow: hidden; transition: box-shadow 0.3s, transform 0.3s;
+    animation: fadeUp 0.35s ease both; cursor: pointer; border-left-width: 4px;
+  }
+  .model-card:hover { box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1); transform: translateY(-2px); }
+
+  .card-main { display: flex; align-items: center; gap: 14px; padding: 16px; user-select: none; }
+  .card-rank { width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(241, 245, 249, 1); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; font-family: 'DM Mono', monospace; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+  
+  /* 排行榜徽章：极简高级感 */
+  .card-rank.r1 { background: linear-gradient(135deg, #fef08a, #fde047); border-color: #facc15; color: #854d0e; }
+  .card-rank.r2 { background: linear-gradient(135deg, #e2e8f0, #cbd5e1); border-color: #94a3b8; color: #334155; }
+  .card-rank.r3 { background: linear-gradient(135deg, #ffedd5, #fdba74); border-color: #f97316; color: #9a3412; }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-source-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .ch-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 4px currentColor; }
+  .card-source { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  
+  .card-model { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
+  .card-note { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  .card-value { text-align: right; flex-shrink: 0; }
+  .cost-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 4px; }
+  .cost-num { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; line-height: 1; }
+  .cost-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  
+  /* 价格颜色阶梯：对比度拉满 */
+  .c-best .cost-num { color: #059669; } /* 翡翠绿 */
+  .c-good .cost-num { color: #0284c7; } /* 湖蓝 */
+  .c-mid  .cost-num { color: #ea580c; } /* 活力橙 */
+  .c-low  .cost-num { color: var(--text-muted); }
+
+  .chevron { margin-left: 8px; color: var(--text-muted); transition: transform 0.3s cubic-bezier(.4,0,.2,1); flex-shrink: 0; }
+  .model-card.open .chevron { transform: rotate(180deg); color: var(--accent); }
+
+  /* ── Expanded detail ── */
+  .card-detail { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(.4,0,.2,1); }
+  .model-card.open .card-detail { max-height: 350px; }
+  .detail-view { border-top: 1px solid rgba(226, 232, 240, 0.6); padding: 16px; background: rgba(255,255,255,0.3); }
+
+  /* 移动端排版对齐修复：Grid */
+  .detail-row { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 0; }
+  .detail-col { display: flex; flex-direction: column; }
+  .detail-col:nth-child(2), .detail-col:nth-child(3) { border-left: 1px solid rgba(226, 232, 240, 0.8); padding-left: 16px; margin-left: 16px; }
+
+  .detail-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 5px; }
+  .detail-val { font-family: 'DM Mono', monospace; font-size: 15px; color: var(--text); font-weight: 500; }
+  .detail-val small { font-size: 11px; color: var(--text-muted); margin-left: 4px; font-weight: 400; }
+  .detail-sub-lbl { font-size: 10px; color: var(--text-muted); font-style: italic; margin-top: 3px; }
+
+  /* calculator */
+  .calc-wrap { display: flex; align-items: center; background: #ffffff; border: 1px solid rgba(226, 232, 240, 1); border-radius: 12px; padding: 0 10px; margin-top: 4px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); }
+  .calc-wrap:focus-within { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+  .calc-prefix { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-muted); margin-right: 4px; flex-shrink: 0; font-weight: 500;}
+  .calc-input { background: transparent !important; border: none !important; border-radius: 0 !important; padding: 8px 0 !important; font-size: 14px; width: 80px; box-shadow: none !important; font-weight: 500; }
+  
+  .calc-result { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 6px; min-height: 16px; transition: color 0.2s; }
+  .calc-result.hit { color: #7c3aed; font-weight: 600; font-size: 13px; }
+
+  /* action bar */
+  .detail-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(226, 232, 240, 0.6); }
+  .btn-edit, .btn-del { display: flex; align-items: center; gap: 5px; padding: 7px 16px; border-radius: 999px; font-size: 11.5px; font-family: 'Sora', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-edit { border: 1px solid rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.05); color: #7c3aed; }
+  .btn-edit:hover { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.3); }
+  .btn-del { border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); color: #e31b1b; margin-left: auto; }
+  .btn-del:hover { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
+
+  /* ── Edit mode ── */
+  .detail-edit { border-top: 1px solid rgba(226, 232, 240, 0.6); padding: 16px; background: rgba(255,255,255,0.4); }
+  .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .edit-field { display: flex; flex-direction: column; gap: 4px; }
+  .edit-field label { font-size: 9.5px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; padding-left: 2px; }
+  .edit-actions { display: flex; gap: 10px; }
+  .btn-save { flex: 1; padding: 10px; background: linear-gradient(135deg, #6366f1, #a855f7); border: none; border-radius: 12px; color: white; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25); transition: all 0.2s; }
+  .btn-save:hover { box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4); transform: translateY(-1px); }
+  .btn-cancel { padding: 10px 20px; background: #ffffff; border: 1px solid rgba(226, 232, 240, 1); border-radius: 12px; color: var(--text-soft); font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(15,23,42,0.02); }
+  .btn-cancel:hover { background: #f8fafc; color: var(--text); }
+
+  .empty-state { text-align: center; padding: 60px 24px; animation: fadeUp 0.5s 0.18s ease both; display: none; }
+  .empty-icon { font-size: 42px; margin-bottom: 12px; filter: drop-shadow(0 4px 12px rgba(139, 92, 246, 0.2)); }
+  .empty-text { font-size: 14px; color: var(--text-soft); font-weight: 400; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  /* 移动端排版适配 */
+  @media (max-width: 480px) {
+    .fields-grid, .edit-grid { grid-template-columns: 1fr; }
+    .model-card.open .card-detail { max-height: 500px; }
+    .detail-row { grid-template-columns: 1fr 1fr; gap: 0; }
+    .detail-col.calc-col { grid-column: 1 / -1; }
+    .detail-col:nth-child(2) { margin-left: 12px; padding-left: 12px; }
+    .detail-col:nth-child(3) { border-left: none; margin-left: 0; padding-left: 0; border-top: 1px solid rgba(226, 232, 240, 0.6); margin-top: 14px; padding-top: 14px; }
+  }
+</style>
+
+
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-pill">
+      <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#8b5cf6"/></svg>
+      Model Tracker
+    </div>
+    <h1>模型<span>性价比</span>追踪</h1>
+    <p class="subtitle">点击卡片展开详情，随时输入余额查询可用次数</p>
+  </header>
+
+  <!-- Collapsible form -->
+  <div class="form-wrapper" id="form-wrapper">
+    <button class="form-toggle-btn" onclick="toggleForm()">
+      <span class="form-toggle-label">
+        <span class="plus-icon">＋</span>
+        添加新记录
+      </span>
+      <span class="form-toggle-right" id="form-toggle-hint">点击展开</span>
+    </button>
+    <div class="form-body">
+      <div class="form-inner">
+        <div class="fields-grid">
+          <div class="field-wrap">
+            <label>来源渠道</label>
+            <input id="f-source" type="text" placeholder="e.g. OpenRouter">
+          </div>
+          <div class="field-wrap">
+            <label>模型名称</label>
+            <input id="f-model" type="text" placeholder="e.g. gemini-2.0-pro">
+          </div>
+          <div class="field-wrap">
+            <label>充值比（¥1 = ? 额度）</label>
+            <input id="f-ratio" type="text" placeholder="e.g. 50 或 100/3">
+            <span class="hint">支持表达式，如 100/3</span>
+          </div>
+          <div class="field-wrap">
+            <label>单价（额度/次）</label>
+            <input id="f-price" type="text" placeholder="e.g. 0.08 或 6/50">
+            <span class="hint">支持表达式</span>
+          </div>
+          <div class="field-wrap full-col">
+            <label>备注</label>
+            <input id="f-note" type="text" placeholder="e.g. 月卡 ¥30→40额度">
+          </div>
+        </div>
+        <button class="btn-add" onclick="addEntry()">＋ 添加到列表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="entry-count">共 <strong id="count">0</strong> 条记录</div>
+    <button class="btn-sort" id="sort-btn" onclick="toggleSort()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 5h10M5 8h6M7 11h2"/>
+      </svg>
+      按性价比排序
+    </button>
+  </div>
+
+  <div class="cards-list" id="cards"></div>
+  <div class="empty-state" id="empty">
+    <div class="empty-icon">🫧</div>
+    <div class="empty-text">还没有记录，添加第一条吧</div>
+  </div>
+
+</div>
+<script>
+let entries = JSON.parse(localStorage.getItem('mt-v4') || '[]');
+let isSorted = false;
+let editingId = null;
+
+// ── channel → 清爽的 SaaS 风格浅彩色 ──
+const chColorMap = {};
+let chColorNext = 0;
+const CH_COLORS = ['#60A5FA', '#818CF8', '#34D399', '#A78BFA', '#F472B6', '#38BDF8', '#FB923C', '#2DD4BF', '#F87171', '#94A3B8'];
+const CH_BG     = [
+  'rgba(96, 165, 250, 0.12)', 'rgba(129, 140, 248, 0.12)', 'rgba(52, 211, 153, 0.12)',
+  'rgba(167, 139, 250, 0.12)', 'rgba(244, 114, 182, 0.12)', 'rgba(56, 189, 248, 0.12)',
+  'rgba(251, 146, 60, 0.12)', 'rgba(45, 212, 191, 0.12)', 'rgba(248, 113, 113, 0.12)',
+  'rgba(148, 163, 184, 0.12)'
+];
+
+function getChColor(source) {
+  const key = (source||'').trim().toLowerCase() || '__none__';
+  if (chColorMap[key] === undefined) {
+    chColorMap[key] = chColorNext % CH_COLORS.length;
+    chColorNext++;
+  }
+  return chColorMap[key];
+}
+
+function rebuildColorMap() {
+  Object.keys(chColorMap).forEach(k => delete chColorMap[k]);
+  chColorNext = 0;
+  // assign in insertion order
+  const seen = [];
+  entries.forEach(e => {
+    const key = (e.source||'').trim().toLowerCase() || '__none__';
+    if (!seen.includes(key)) seen.push(key);
+  });
+  seen.forEach(k => { chColorMap[k] = chColorNext % CH_COLORS.length; chColorNext++; });
+}
+
+function save() { localStorage.setItem('mt-v4', JSON.stringify(entries)); }
+
+function safeEval(expr) {
+  if (!expr && expr !== 0) return null;
+  const s = String(expr).trim();
+  if (/^[\d\s\+\-\*\/\.]+$/.test(s)) {
+    try {
+      const v = Function('"use strict";return(' + s + ')')();
+      return isFinite(v) && v > 0 ? v : null;
+    } catch { return null; }
+  }
+  const n = parseFloat(s);
+  return isFinite(n) && n > 0 ? n : null;
+}
+
+function calcCost(e) {
+  const r = safeEval(e.ratio), p = safeEval(e.price);
+  return (r && p) ? p / r : null;
+}
+
+function costCls(c) {
+  if (c === null) return 'c-low';
+  if (c <= 0.04)  return 'c-best';
+  if (c <= 0.1)   return 'c-good';
+  if (c <= 0.3)   return 'c-mid';
+  return 'c-low';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmtExpr(raw) {
+  const s = String(raw||'').trim();
+  const v = safeEval(s);
+  if (!s) return '—';
+  if (/[\/\*\+\-]/.test(s) && v !== null) return esc(s) + ' <small>≈ ' + v.toFixed(3) + '</small>';
+  return esc(s);
+}
+
+function render() {
+  rebuildColorMap();
+  const el = document.getElementById('cards');
+  const empty = document.getElementById('empty');
+  document.getElementById('count').textContent = entries.length;
+  el.innerHTML = '';
+
+  if (!entries.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  let list = [...entries];
+  if (isSorted) {
+    list.sort((a, b) => {
+      const ca = calcCost(a), cb = calcCost(b);
+      if (ca === null && cb === null) return 0;
+      if (ca === null) return 1;
+      if (cb === null) return -1;
+      return ca - cb;
+    });
+  }
+
+  const costs = list.map(e => calcCost(e)).filter(c => c !== null);
+  const best = costs.length ? Math.min(...costs) : null;
+
+  list.forEach((e, i) => {
+    const cost = calcCost(e);
+    const costStr = cost !== null ? '¥' + cost.toFixed(4) : '—';
+    const perYuan = cost !== null ? (1/cost).toFixed(1) + ' 次/¥' : '';
+    const cls = costCls(cost);
+    const rankCls = isSorted ? (i===0?'r1':i===1?'r2':i===2?'r3':'') : '';
+    const rankTxt = isSorted ? (i+1) : '·';
+    const isBest = cost !== null && best !== null && Math.abs(cost - best) < 0.000001;
+    const ratio = safeEval(e.ratio) || 0;
+    const price = safeEval(e.price) || 0;
+    const ci = getChColor(e.source);
+    const chColor = CH_COLORS[ci];
+    const chBg = CH_BG[ci];
+    const isEditing = editingId === e.id;
+
+    const card = document.createElement('div');
+    card.className = 'model-card' + (isEditing ? ' open' : '');
+    card.style.animationDelay = (i * 0.04) + 's';
+    card.style.borderLeftColor = chColor;
+    card.dataset.id = e.id;
+
+    card.innerHTML = `
+      <div class="card-main" onclick="toggleCard(this.parentElement)">
+        <div class="card-rank ${rankCls}">${rankTxt}</div>
+        <div class="card-info">
+          <div class="card-source-wrap">
+            <span class="ch-dot" style="background:${chColor}"></span>
+            <span class="card-source" style="color:${chColor}">${esc(e.source)||'未知渠道'}</span>
+          </div>
+          <div class="card-model">${esc(e.model)||'未命名模型'}</div>
+          ${e.note ? `<div class="card-note">${esc(e.note)}</div>` : ''}
+        </div>
+        <div class="card-value ${cls}">
+          <div class="cost-label">¥ / 次</div>
+          <div class="cost-num">${isBest && isSorted ? '🏆 ' : ''}${costStr}</div>
+          ${perYuan ? `<div class="cost-sub">${perYuan}</div>` : ''}
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6l4 4 4-4"/>
+        </svg>
+      </div>
+      <div class="card-detail">
+        ${isEditing ? `
+        <div class="detail-edit" onclick="event.stopPropagation()">
+          <div class="edit-grid">
+            <div class="edit-field"><label>来源渠道</label><input id="e-source-${e.id}" value="${esc(e.source)}"></div>
+            <div class="edit-field"><label>模型名称</label><input id="e-model-${e.id}" value="${esc(e.model)}"></div>
+            <div class="edit-field"><label>充值比</label><input id="e-ratio-${e.id}" value="${esc(e.ratio)}"><span class="hint">支持表达式</span></div>
+            <div class="edit-field"><label>单价</label><input id="e-price-${e.id}" value="${esc(e.price)}"><span class="hint">支持表达式</span></div>
+            <div class="edit-field full-col"><label>备注</label><input id="e-note-${e.id}" value="${esc(e.note)}"></div>
+          </div>
+          <div class="edit-actions">
+            <button class="btn-save" onclick="saveEdit(${e.id})">保存</button>
+            <button class="btn-cancel" onclick="cancelEdit(event)">取消</button>
+          </div>
+        </div>
+        ` : `
+        <div class="detail-view">
+          <div class="detail-row">
+            <div class="detail-col">
+              <div class="detail-lbl">充值比</div>
+              <div class="detail-val">¥1 = ${fmtExpr(e.ratio)}</div>
+              <div class="detail-sub-lbl">额度</div>
+            </div>
+            <div class="detail-col">
+              <div class="detail-lbl">单价</div>
+              <div class="detail-val">${fmtExpr(e.price)}</div>
+              <div class="detail-sub-lbl">额度 / 次</div>
+            </div>
+            <div class="detail-col calc-col">
+              <div class="detail-lbl">余额 → 可用次数</div>
+              <div class="calc-wrap" onclick="event.stopPropagation()">
+                <span class="calc-prefix">¥</span>
+                <input class="calc-input" type="text" placeholder="输入余额"
+                  data-ratio="${ratio}" data-price="${price}"
+                  oninput="calcLive(this)" onclick="event.stopPropagation()">
+              </div>
+              <div class="calc-result">—</div>
+            </div>
+          </div>
+          <div class="detail-actions" onclick="event.stopPropagation()">
+            <button class="btn-edit" onclick="startEdit(${e.id}, event)">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+              编辑
+            </button>
+            <button class="btn-del" onclick="delEntry(${e.id}, event)">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              删除
+            </button>
+          </div>
+        </div>
+        `}
+      </div>
+    `;
+
+    el.appendChild(card);
+  });
+}
+
+function calcLive(input) {
+  const ratio = parseFloat(input.dataset.ratio);
+  const price = parseFloat(input.dataset.price);
+  const b = safeEval(input.value);
+  const resultEl = input.closest('.calc-col').querySelector('.calc-result');
+  if (!b || !ratio || !price) { resultEl.textContent = '—'; resultEl.className = 'calc-result'; return; }
+  const n = Math.floor((b * ratio) / price);
+  resultEl.textContent = n.toLocaleString() + ' 次可用';
+  resultEl.className = 'calc-result hit';
+}
+
+function toggleCard(card) {
+  if (editingId) return;
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.model-card.open').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+function startEdit(id, ev) {
+  ev.stopPropagation();
+  editingId = id;
+  render();
+  // keep card open
+  document.querySelectorAll('.model-card').forEach(c => {
+    if (parseInt(c.dataset.id) === id) c.classList.add('open');
+  });
+}
+
+function cancelEdit(ev) {
+  ev.stopPropagation();
+  editingId = null;
+  render();
+}
+
+function saveEdit(id) {
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  entries[idx] = {
+    ...entries[idx],
+    source: document.getElementById('e-source-'+id).value.trim(),
+    model:  document.getElementById('e-model-'+id).value.trim(),
+    ratio:  document.getElementById('e-ratio-'+id).value.trim(),
+    price:  document.getElementById('e-price-'+id).value.trim(),
+    note:   document.getElementById('e-note-'+id).value.trim(),
+  };
+  editingId = null;
+  save();
+  render();
+}
+
+function toggleSort() {
+  isSorted = !isSorted;
+  document.getElementById('sort-btn').classList.toggle('active', isSorted);
+  render();
+}
+
+function toggleForm() {
+  const w = document.getElementById('form-wrapper');
+  const hint = document.getElementById('form-toggle-hint');
+  const isOpen = w.classList.toggle('open');
+  hint.textContent = isOpen ? '点击收起' : '点击展开';
+  if (isOpen) setTimeout(() => document.getElementById('f-source').focus(), 320);
+}
+
+function addEntry() {
+  const source = document.getElementById('f-source').value.trim();
+  const model  = document.getElementById('f-model').value.trim();
+  const ratio  = document.getElementById('f-ratio').value.trim();
+  const price  = document.getElementById('f-price').value.trim();
+  const note   = document.getElementById('f-note').value.trim();
+
+  if (!model && !source) { shake(document.querySelector('.btn-add')); return; }
+
+  entries.unshift({ id: Date.now(), source, model, ratio, price, note });
+  save();
+  render();
+  ['f-source','f-model','f-ratio','f-price','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-source').focus();
+}
+
+function delEntry(id, ev) {
+  ev.stopPropagation();
+  entries = entries.filter(e => e.id !== id);
+  save();
+  render();
+}
+
+function shake(el) {
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = 'shake 0.38s ease';
+  setTimeout(() => el.style.animation = '', 400);
+}
+
+document.addEventListener('keydown', ev => {
+  const ids = ['f-source','f-model','f-ratio','f-price','f-note'];
+  if (ev.key === 'Enter' && ids.includes(document.activeElement.id)) addEntry();
+  if (ev.key === 'Escape' && editingId) { editingId = null; render(); }
+});
+
+render();
+</script>
+</body>
+</html>

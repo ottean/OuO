@@ -194,8 +194,9 @@
     box-shadow: none;
   }
 
+  /* 修改1：将桌面端的 max-height 从 420px 提升到 600px 以防万一 */
   .form-wrapper.open .form-body {
-    max-height: 420px;
+    max-height: 600px;
     opacity: 1;
     visibility: visible;
     box-shadow: 0 4px 20px var(--glass-shadow);
@@ -547,7 +548,11 @@
 
   @media (max-width: 480px) {
     .fields-grid, .edit-grid { grid-template-columns: 1fr; }
-    .model-card.open .card-detail { max-height: 480px; }
+    /* 修改2：将移动端卡片展开高度从 480px 提升到 600px */
+    .model-card.open .card-detail { max-height: 600px; }
+    /* 修改3：大幅提升移动端表单展开的限制高度，容纳所有垂直堆叠的输入框 */
+    .form-wrapper.open .form-body { max-height: 800px; }
+    
     .detail-row { grid-template-columns: 1fr 1fr; gap: 0; }
     .detail-col.calc-col { grid-column: 1 / -1; }
     .detail-col:nth-child(2) { margin-left: 12px; padding-left: 12px; }
@@ -674,8 +679,8 @@
     font-weight: 900;
     letter-spacing: -0.01em;
     color: #f472b6;
-    -webkit-text-stroke: initial; /* Remove stroke to avoid blurry letters */
-    /* Use multiple text-shadows for a cleaner, bolder outline & thick drop shadow */
+    -webkit-text-stroke: initial; /* Remove blurry text-stroke */
+    /* Only use clear external text-shadow for outline & depth */
     text-shadow: 
       -1.5px -1.5px 0 var(--kawaii-border),
        1.5px -1.5px 0 var(--kawaii-border),
@@ -751,12 +756,42 @@
   body[data-theme="kawaii"] .form-toggle-btn,
   body[data-theme="kawaii"] .model-card {
     background: #fff;
-    border: 2px solid var(--kawaii-border) !important; /* Force solid border everywhere */
+    border: 2px solid var(--kawaii-border) !important; /* Force solid border everywhere, remove left border */
     border-radius: var(--radius);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
   }
+  
+  /* Kawaii Internal Color Strip perfectly adapted */
+  body[data-theme="kawaii"] .model-card {
+    box-shadow: 0 6px 0 var(--kawaii-border);
+    position: relative;
+    overflow: hidden; /* Contains the pseudo element */
+  }
+  body[data-theme="kawaii"] .model-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 10px;
+    background: var(--card-color);
+    border-right: 2px solid var(--kawaii-border);
+    z-index: 0;
+  }
+  /* Offset content to not touch the internal color strip */
+  body[data-theme="kawaii"] .card-main {
+    position: relative; z-index: 1; padding-left: 22px;
+  }
+  body[data-theme="kawaii"] .detail-view,
+  body[data-theme="kawaii"] .detail-edit {
+    position: relative; z-index: 1; padding-left: 22px;
+  }
+
+  body[data-theme="kawaii"] .model-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 var(--kawaii-border);
+  }
+  
   body[data-theme="kawaii"] .form-toggle-btn {
     box-shadow: 0 6px 0 var(--kawaii-border);
   }
@@ -764,14 +799,7 @@
     transform: translateY(6px);
     box-shadow: 0 0 0 var(--kawaii-border);
   }
-  body[data-theme="kawaii"] .model-card {
-    /* Inner color strip (inset) + outer hard shadow */
-    box-shadow: inset 6px 0 0 var(--card-color), 0 6px 0 var(--kawaii-border);
-  }
-  body[data-theme="kawaii"] .model-card:hover {
-    transform: translateY(-2px);
-    box-shadow: inset 6px 0 0 var(--card-color), 0 8px 0 var(--kawaii-border);
-  }
+  
   body[data-theme="kawaii"] .form-toggle-label { font-family: 'Nunito', sans-serif; font-weight: 800; color: var(--text); }
   body[data-theme="kawaii"] .plus-icon {
     background: var(--kawaii-main);
@@ -1380,7 +1408,7 @@
         <div class="theme-menu" id="theme-menu">
           <button class="t-btn" data-theme="glass" onclick="setTheme('glass')">
             <span class="t-swatch" style="background:linear-gradient(135deg,#c084fc,#f97316)"></span>
-            默认
+            原版
           </button>
           <button class="t-btn" data-theme="kawaii" onclick="setTheme('kawaii')">
             <span class="t-swatch" style="background:linear-gradient(135deg,#f9a8d4,#f472b6); border: 2px solid #831843;"></span>
@@ -1388,11 +1416,11 @@
           </button>
           <button class="t-btn" data-theme="minimal" onclick="setTheme('minimal')">
             <span class="t-swatch" style="background:#fff; border: 1px solid #000;"></span>
-            灰白
+            简约
           </button>
           <button class="t-btn" data-theme="luxe" onclick="setTheme('luxe')">
             <span class="t-swatch" style="background:#faf7f2; border: 1px solid #c5a059;"></span>
-            信函
+            华丽
           </button>
           <button class="t-btn" data-theme="flora" onclick="setTheme('flora')">
             <span class="t-swatch" style="background:linear-gradient(135deg,#81c784,#aed581)"></span>

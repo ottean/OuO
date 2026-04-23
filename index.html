@@ -1474,12 +1474,26 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="entry-count">共 <strong id="count">0</strong> 条记录</div>
-    <button class="btn-sort" id="sort-btn" onclick="toggleSort()">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 5h10M5 8h6M7 11h2"/>
-      </svg>
-      按性价比排序
-    </button>
+    
+    <div style="display: flex; gap: 8px;">
+      <!-- 隐藏的文件上传输入框 -->
+      <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+      
+      <!-- 导入/导出按钮 -->
+      <button class="btn-sort" onclick="document.getElementById('import-file').click()" title="导入数据">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12V4m0 0L5 7m3-3l3 3M2 14h12"/></svg>
+      </button>
+      <button class="btn-sort" onclick="exportData()" title="导出备份">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4v8m0 0l-3-3m3 3l3-3M2 14h12"/></svg>
+      </button>
+
+      <button class="btn-sort" id="sort-btn" onclick="toggleSort()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 5h10M5 8h6M7 11h2"/>
+        </svg>
+        按性价比排序
+      </button>
+    </div>
   </div>
 
   <div class="cards-list" id="cards"></div>
@@ -1825,6 +1839,63 @@ document.addEventListener('keydown', ev => {
   if (ev.key === 'Enter' && ids.includes(document.activeElement.id)) addEntry();
   if (ev.key === 'Escape' && editingId) { editingId = null; render(); }
 });
+
+// ── 导入/导出功能 ──
+
+// 导出为 JSON 文件
+function exportData() {
+  if (entries.length === 0) return alert('当前没有可导出的记录 🫧');
+  
+  const dataStr = JSON.stringify(entries, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ModelTracker_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 从 JSON 文件导入
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      
+      // 简单的数据格式校验
+      if (!Array.isArray(importedData)) throw new Error('格式不正确');
+      
+      const confirmMsg = `成功读取 ${importedData.length} 条记录。\n\n点击【确定】覆盖当前所有数据\n点击【取消】将新数据追加到列表后面`;
+      
+      if (confirm(confirmMsg)) {
+        entries = importedData; // 覆盖
+      } else {
+        // 追加并去重 (基于 ID)
+        const existingIds = new Set(entries.map(item => item.id));
+        const newEntries = importedData.filter(item => !existingIds.has(item.id));
+        entries = [...newEntries, ...entries];
+      }
+      
+      save();
+      render();
+      alert('导入成功！✨');
+    } catch (err) {
+      alert('导入失败：文件格式不正确或已损坏。请确保是之前导出的 JSON 文件。');
+    } finally {
+      // 清空 input，允许重复导入同一个文件
+      event.target.value = ''; 
+    }
+  };
+  reader.readAsText(file);
+}
 
 render();
 </script>

@@ -545,18 +545,6 @@
     0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
   }
 
-  @media (max-width: 480px) {
-    .fields-grid, .edit-grid { grid-template-columns: 1fr; }
-    .model-card.open .card-detail { max-height: 600px; }
-    .form-wrapper.open .form-body { max-height: 800px; }
-    
-    .detail-row { grid-template-columns: 1fr 1fr; gap: 0; }
-    .detail-col.calc-col { grid-column: 1 / -1; }
-    .detail-col:nth-child(2) { margin-left: 12px; padding-left: 12px; }
-    .detail-col:nth-child(3) { border-left: none; margin-left: 0; padding-left: 0; border-top: 1px solid rgba(168,159,192,0.18); margin-top: 12px; padding-top: 12px; }
-  }
-
-
   /* ╔══════════════════════════════════════════════════════╗
      ║   THEME MENU                                         ║
      ╚══════════════════════════════════════════════════════╝ */
@@ -1354,6 +1342,42 @@
   body[data-theme="flora"] .t-btn:hover { background: rgba(82,183,136,0.1); color: #2d6a4f; }
   body[data-theme="flora"] .t-btn.active { background: rgba(255,255,255,0.9); border-color: rgba(82,183,136,0.3); color: #2d6a4f; }
 
+  /* ╔══════════════════════════════════════════════════════╗
+     ║   MOBILE RESPONSIVENESS & THEME DIVIDERS             ║
+     ╚══════════════════════════════════════════════════════╝ */
+  @media (max-width: 480px) {
+    .fields-grid, .edit-grid { grid-template-columns: 1fr; }
+    .model-card.open .card-detail { max-height: 600px; }
+    .form-wrapper.open .form-body { max-height: 800px; }
+    
+    .detail-row { grid-template-columns: 1fr 1fr; gap: 0; }
+    .detail-col.calc-col { grid-column: 1 / -1; }
+    .detail-col:nth-child(2) { margin-left: 12px; padding-left: 12px; }
+    
+    /* 强制清除第三列（折行后）的左侧边框，并重置外边距 */
+    .detail-col:nth-child(3) { 
+      border-left: none !important; 
+      margin-left: 0 !important; 
+      padding-left: 0 !important; 
+      border-top: 1px solid rgba(168,159,192,0.18); /* 默认横向分割线 */
+      margin-top: 12px; 
+      padding-top: 12px; 
+    }
+    
+    /* 针对各主题做专门的手机端横向分割线适配 */
+    body[data-theme="kawaii"] .detail-col:nth-child(3) {
+      border-top: 2px dashed var(--kawaii-border) !important;
+    }
+    body[data-theme="minimal"] .detail-col:nth-child(3) {
+      border-top: 1px dotted #000 !important;
+    }
+    body[data-theme="luxe"] .detail-col:nth-child(3) {
+      border-top: 1px solid var(--luxe-border) !important;
+    }
+    body[data-theme="flora"] .detail-col:nth-child(3) {
+      border-top: 1px solid rgba(163,212,172,0.6) !important;
+    }
+  }
 </style>
 </head>
 <body>

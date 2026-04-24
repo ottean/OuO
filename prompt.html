@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人设 Prompt 管理器</title>
+    <title>百变Zo登场</title>
     <style>
         /* 基础与字体，采用仿iOS字体 */
         :root {
@@ -20,7 +20,6 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* 动态柔和背景 */
         body {
             background-color: #f7f9fc;
             color: var(--text-color);
@@ -29,7 +28,7 @@
             position: relative;
         }
 
-        /* 背景液态模糊色块，增强玻璃质感 */
+        /* 背景液态模糊色块 */
         .bg-blob {
             position: fixed;
             border-radius: 50%;
@@ -54,23 +53,85 @@
             padding: 40px 20px;
         }
 
+        /* 头部与返回键 */
         header {
-            text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+            color: #6a7495;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(144, 153, 190, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(-4px);
+            color: #5c627a;
         }
 
         header h1 {
             font-weight: 600;
-            font-size: 24px;
+            font-size: 28px;
             letter-spacing: 1px;
             color: #6a7495;
+            text-align: center;
         }
 
-        /* 卡片网格 */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
+        /* 工具栏：统计 + 导入导出 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 5px;
+        }
+
+        .count-text {
+            font-size: 14px;
+            color: #9ba4c4;
+        }
+        .count-text strong {
+            color: #7983a8;
+            font-weight: 600;
+        }
+
+        .actions-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-tool {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+            color: #6a7495;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+
+        .btn-tool:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(144, 153, 190, 0.15);
         }
 
         /* 玻璃态通用类 */
@@ -83,25 +144,61 @@
             box-shadow: var(--glass-shadow);
         }
 
-        /* 卡片样式 */
+        /* 卡片网格 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        /* 卡片样式更新 */
         .card {
             height: 120px;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: center;      /* 完美垂直居中 */
+            justify-content: center;  /* 完美水平居中 */
+            position: relative;       /* 为底部字数提供定位基准 */
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             text-align: center;
             padding: 15px;
-            font-size: 18px;
-            font-weight: 500;
             word-break: break-word;
+            line-height: 1.4;
         }
 
         .card:hover {
             transform: translateY(-5px) scale(1.02);
             background: rgba(255, 255, 255, 0.6);
             box-shadow: 0 12px 40px 0 rgba(144, 153, 190, 0.25);
+        }
+
+        /* 备注名：20px */
+        .card-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            /* 给底部预留一点空间，防止两行文字时和字数重叠 */
+            margin-bottom: 8px; 
+        }
+
+        /* 字数：8px，且绝对定位在下面中心 */
+        .card-count {
+            font-size: 8px;
+            color: #9ba4c4;
+            font-family: "DM Mono", monospace, sans-serif;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 2px 6px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap; /* 强制不换行 */
         }
 
         /* 添加按钮卡片 */
@@ -157,8 +254,8 @@
             transform: translateY(0);
         }
 
-        /* 输入框和文本域 */
-        input, textarea {
+        /* 文本框基础样式 */
+        input[type="text"] {
             width: 100%;
             background: rgba(255, 255, 255, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.8);
@@ -171,19 +268,51 @@
             box-shadow: inset 0 2px 5px rgba(144, 153, 190, 0.05);
         }
 
-        input::placeholder, textarea::placeholder {
-            color: #b0b6cf;
-        }
-
-        input:focus, textarea:focus {
+        input[type="text"]:focus {
             background: rgba(255, 255, 255, 0.9);
             box-shadow: 0 0 0 3px rgba(194, 233, 251, 0.5);
         }
 
-        textarea {
-            resize: vertical;
+        /* 💡 文本域包裹层：解决移动端拖拽角被覆盖的问题 */
+        .textarea-wrapper {
+            width: 100%;
             min-height: 250px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            box-shadow: inset 0 2px 5px rgba(144, 153, 190, 0.05);
+            /* 将伸缩功能交给包裹层 */
+            resize: vertical;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .textarea-wrapper:focus-within {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(194, 233, 251, 0.5);
+        }
+
+        /* 内部真正的文本域 */
+        textarea {
+            flex: 1; /* 撑满包裹层 */
+            width: 100%;
+            background: transparent;
+            border: none;
+            resize: none; /* 禁用原生的伸缩，因为父级在伸缩 */
+            outline: none;
+            padding: 15px;
+            /* 预留右下角的边距，避开父级的拖拽热区 */
+            padding-right: 20px;
+            padding-bottom: 20px;
+            font-size: 15px;
+            color: var(--text-color);
             line-height: 1.6;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #b0b6cf;
         }
 
         /* 按钮区域 */
@@ -194,104 +323,60 @@
             margin-top: 10px;
         }
 
-        button {
+        .modal-btn {
             padding: 10px 24px;
             border: none;
             border-radius: 20px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
             color: #fff;
         }
 
-        .btn-cancel {
-            background: #d3d8e8;
-            color: #6a7495;
-        }
+        .btn-cancel { background: #d3d8e8; color: #6a7495; }
+        .btn-delete { background: #ffb6c1; margin-right: auto; }
+        .btn-save   { background: #a1c4fd; }
 
-        .btn-delete {
-            background: #ffb6c1; /* 柔和浅粉红 */
-            margin-right: auto; /* 推到左边 */
-        }
-
-        .btn-save {
-            background: #a1c4fd; /* 柔和浅蓝 */
-        }
-
-        button:hover {
-            filter: brightness(0.95);
-            transform: scale(1.05);
-        }
-        
-        button:active {
-            transform: scale(0.95);
-        }
-
-/* 悬浮返回主页按钮 */
-.back-home-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 9999; /* 确保在最顶层 */
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 999px;
-    color: #5c627a;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-.back-home-btn:hover {
-    background: rgba(255, 255, 255, 0.8);
-    transform: translateX(-4px); /* 悬浮时微微向左滑动，提示返回 */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    color: #333;
-}
-
-/* 手机端适配稍微改小一点 */
-@media (max-width: 480px) {
-    .back-home-btn {
-        top: 15px;
-        left: 15px;
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-}
+        .modal-btn:hover { filter: brightness(0.95); transform: scale(1.05); }
+        .modal-btn:active { transform: scale(0.95); }
 
     </style>
 </head>
 <body>
-<!-- 返回主页按钮 -->
-<a href="index.html" class="back-home-btn">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-    </svg>
-    返回
-</a>
 
-    <!-- 背景色块 -->
     <div class="bg-blob blob-1"></div>
     <div class="bg-blob blob-2"></div>
     <div class="bg-blob blob-3"></div>
 
     <div class="container">
         <header>
+            <a href="index.html" class="back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                返回Zo的百宝箱
+            </a>
             <h1>人设管理器</h1>
         </header>
 
+        <!-- 工具栏：统计与导入导出 -->
+        <div class="toolbar">
+            <div class="count-text">共 <strong id="prompt-count">0</strong> 个人设卡片</div>
+            
+            <div class="actions-right">
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                <button class="btn-tool" onclick="document.getElementById('import-file').click()">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12V4m0 0L5 7m3-3l3 3M2 14h12"/></svg>
+                    导入
+                </button>
+                <button class="btn-tool" onclick="exportData()">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4v8m0 0l-3-3m3 3l3-3M2 14h12"/></svg>
+                    导出
+                </button>
+            </div>
+        </div>
+
         <div class="grid" id="card-container">
-            <!-- 卡片将通过 JS 动态生成在这里 -->
+            <!-- 卡片将通过 JS 动态生成 -->
         </div>
     </div>
 
@@ -299,23 +384,26 @@
     <div class="modal-overlay" id="modal">
         <div class="modal-content glass">
             <input type="text" id="input-remark" placeholder="输入人物备注 (如：傲娇小猫)">
-            <textarea id="input-prompt" placeholder="在这里粘贴或输入完整的 Prompt 人物设定..."></textarea>
+            
+            <!-- 加入包裹层 -->
+            <div class="textarea-wrapper">
+                <textarea id="input-prompt" placeholder="在这里粘贴完整的 Prompt 人设设定..."></textarea>
+            </div>
             
             <div class="actions">
-                <button class="btn-delete" id="btn-delete" style="display: none;">删除</button>
-                <button class="btn-cancel" id="btn-cancel">取消</button>
-                <button class="btn-save" id="btn-save">保存</button>
+                <button class="modal-btn btn-delete" id="btn-delete" style="display: none;">删除</button>
+                <button class="modal-btn btn-cancel" id="btn-cancel">取消</button>
+                <button class="modal-btn btn-save" id="btn-save">保存</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 初始化数据
         let characters = JSON.parse(localStorage.getItem('prompts_data')) || [];
         let currentEditId = null;
 
-        // 获取 DOM 元素
         const container = document.getElementById('card-container');
+        const countText = document.getElementById('prompt-count');
         const modal = document.getElementById('modal');
         const inputRemark = document.getElementById('input-remark');
         const inputPrompt = document.getElementById('input-prompt');
@@ -323,16 +411,37 @@
         const btnCancel = document.getElementById('btn-cancel');
         const btnDelete = document.getElementById('btn-delete');
 
+        // 计算字符数（去空白符）
+        function getCharCount(text) {
+            if (!text) return 0;
+            return text.replace(/\s+/g, '').length;
+        }
+
         // 渲染主页卡片
         function renderCards() {
-            container.innerHTML = ''; // 清空当前视图
+            container.innerHTML = ''; 
+            countText.textContent = characters.length; 
 
             // 渲染已有角色卡片
             characters.forEach(char => {
                 const card = document.createElement('div');
                 card.className = 'card glass';
-                card.textContent = char.remark;
                 card.onclick = () => openModal(char.id);
+
+                // 创建名字行
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'card-name';
+                nameDiv.textContent = char.remark;
+
+                // 创建字数行
+                const charCount = getCharCount(char.prompt);
+                const countDiv = document.createElement('div');
+                countDiv.className = 'card-count';
+                countDiv.textContent = charCount + ' 字符';
+
+                card.appendChild(nameDiv);
+                card.appendChild(countDiv);
+                
                 container.appendChild(card);
             });
 
@@ -344,23 +453,20 @@
             container.appendChild(addCard);
         }
 
-        // 打开弹窗 (id 为 null 表示新建)
+        // 打开弹窗
         function openModal(id) {
             currentEditId = id;
             if (id) {
-                // 编辑模式
                 const char = characters.find(c => c.id === id);
                 inputRemark.value = char.remark;
                 inputPrompt.value = char.prompt;
-                btnDelete.style.display = 'block'; // 显示删除按钮
+                btnDelete.style.display = 'block';
             } else {
-                // 新建模式
                 inputRemark.value = '';
                 inputPrompt.value = '';
-                btnDelete.style.display = 'none'; // 隐藏删除按钮
+                btnDelete.style.display = 'none';
             }
             modal.classList.add('active');
-            // 聚焦到输入框
             setTimeout(() => inputRemark.focus(), 100);
         }
 
@@ -381,14 +487,12 @@
             }
 
             if (currentEditId) {
-                // 更新现有数据
                 const index = characters.findIndex(c => c.id === currentEditId);
                 if (index !== -1) {
                     characters[index].remark = remarkText;
                     characters[index].prompt = promptText;
                 }
             } else {
-                // 添加新数据 (用时间戳生成简易ID)
                 characters.push({
                     id: Date.now().toString(),
                     remark: remarkText,
@@ -396,9 +500,7 @@
                 });
             }
 
-            // 同步到 LocalStorage
             localStorage.setItem('prompts_data', JSON.stringify(characters));
-            
             renderCards();
             closeModal();
         }
@@ -413,16 +515,66 @@
             }
         }
 
+        // 导出 JSON
+        function exportData() {
+            if (characters.length === 0) return alert('当前没有人设可以导出 🫧');
+            
+            const dataStr = JSON.stringify(characters, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Prompt_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 导入 JSON
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (!Array.isArray(importedData)) throw new Error('格式不正确');
+                    
+                    const confirmMsg = `成功读取 ${importedData.length} 个人设卡片。\n\n点击【确定】覆盖当前所有数据\n点击【取消】将新数据追加到列表里`;
+                    
+                    if (confirm(confirmMsg)) {
+                        characters = importedData; 
+                    } else {
+                        const existingIds = new Set(characters.map(item => item.id));
+                        const newEntries = importedData.filter(item => !existingIds.has(item.id));
+                        characters = [...newEntries, ...characters];
+                    }
+                    
+                    localStorage.setItem('prompts_data', JSON.stringify(characters));
+                    renderCards();
+                    alert('导入成功！✨');
+                } catch (err) {
+                    alert('导入失败：文件格式不正确或已损坏。请确保是之前导出的人设 JSON 文件。');
+                } finally {
+                    event.target.value = ''; 
+                }
+            };
+            reader.readAsText(file);
+        }
+
         // 事件监听
         btnSave.addEventListener('click', saveData);
         btnCancel.addEventListener('click', closeModal);
         btnDelete.addEventListener('click', deleteData);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-        // 点击遮罩层也可以关闭弹窗
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
+        // 快捷键支持
+        document.addEventListener('keydown', ev => {
+            if (ev.key === 'Escape' && modal.classList.contains('active')) closeModal();
         });
 
         // 初始化渲染

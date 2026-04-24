@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人设 Prompt 管理器</title>
+    <style>
+        /* 基础与字体，采用仿iOS字体 */
+        :root {
+            --text-color: #5c627a;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(144, 153, 190, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* 动态柔和背景 */
+        body {
+            background-color: #f7f9fc;
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景液态模糊色块，增强玻璃质感 */
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.7;
+            animation: float 15s ease-in-out infinite alternate;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #e0c3fc; }
+        .blob-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #c2e9fb; }
+        .blob-3 { top: 40%; left: 30%; width: 40vw; height: 40vw; background: #ffd1ff; animation-delay: -5s;}
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 5%) scale(1.1); }
+        }
+
+        /* 容器 */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-weight: 600;
+            font-size: 24px;
+            letter-spacing: 1px;
+            color: #6a7495;
+        }
+
+        /* 卡片网格 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        /* 玻璃态通用类 */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* 卡片样式 */
+        .card {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-align: center;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .card:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 12px 40px 0 rgba(144, 153, 190, 0.25);
+        }
+
+        /* 添加按钮卡片 */
+        .add-card {
+            font-size: 36px;
+            color: #9ba4c4;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px dashed rgba(255, 255, 255, 0.7);
+        }
+
+        .add-card:hover {
+            color: #7983a8;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 弹窗遮罩 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(230, 235, 245, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* 弹窗内容 */
+        .modal-content {
+            width: 90%;
+            max-width: 600px;
+            padding: 30px;
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        /* 输入框和文本域 */
+        input, textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            padding: 15px;
+            font-size: 16px;
+            color: var(--text-color);
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 2px 5px rgba(144, 153, 190, 0.05);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #b0b6cf;
+        }
+
+        input:focus, textarea:focus {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(194, 233, 251, 0.5);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 250px;
+            line-height: 1.6;
+        }
+
+        /* 按钮区域 */
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #fff;
+        }
+
+        .btn-cancel {
+            background: #d3d8e8;
+            color: #6a7495;
+        }
+
+        .btn-delete {
+            background: #ffb6c1; /* 柔和浅粉红 */
+            margin-right: auto; /* 推到左边 */
+        }
+
+        .btn-save {
+            background: #a1c4fd; /* 柔和浅蓝 */
+        }
+
+        button:hover {
+            filter: brightness(0.95);
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 背景色块 -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <div class="container">
+        <header>
+            <h1>人设管理器</h1>
+        </header>
+
+        <div class="grid" id="card-container">
+            <!-- 卡片将通过 JS 动态生成在这里 -->
+        </div>
+    </div>
+
+    <!-- 编辑/添加弹窗 -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content glass">
+            <input type="text" id="input-remark" placeholder="输入人物备注 (如：傲娇小猫)">
+            <textarea id="input-prompt" placeholder="在这里粘贴或输入完整的 Prompt 人物设定..."></textarea>
+            
+            <div class="actions">
+                <button class="btn-delete" id="btn-delete" style="display: none;">删除</button>
+                <button class="btn-cancel" id="btn-cancel">取消</button>
+                <button class="btn-save" id="btn-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化数据
+        let characters = JSON.parse(localStorage.getItem('prompts_data')) || [];
+        let currentEditId = null;
+
+        // 获取 DOM 元素
+        const container = document.getElementById('card-container');
+        const modal = document.getElementById('modal');
+        const inputRemark = document.getElementById('input-remark');
+        const inputPrompt = document.getElementById('input-prompt');
+        const btnSave = document.getElementById('btn-save');
+        const btnCancel = document.getElementById('btn-cancel');
+        const btnDelete = document.getElementById('btn-delete');
+
+        // 渲染主页卡片
+        function renderCards() {
+            container.innerHTML = ''; // 清空当前视图
+
+            // 渲染已有角色卡片
+            characters.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'card glass';
+                card.textContent = char.remark;
+                card.onclick = () => openModal(char.id);
+                container.appendChild(card);
+            });
+
+            // 渲染“添加”按钮卡片
+            const addCard = document.createElement('div');
+            addCard.className = 'card glass add-card';
+            addCard.textContent = '+';
+            addCard.onclick = () => openModal(null);
+            container.appendChild(addCard);
+        }
+
+        // 打开弹窗 (id 为 null 表示新建)
+        function openModal(id) {
+            currentEditId = id;
+            if (id) {
+                // 编辑模式
+                const char = characters.find(c => c.id === id);
+                inputRemark.value = char.remark;
+                inputPrompt.value = char.prompt;
+                btnDelete.style.display = 'block'; // 显示删除按钮
+            } else {
+                // 新建模式
+                inputRemark.value = '';
+                inputPrompt.value = '';
+                btnDelete.style.display = 'none'; // 隐藏删除按钮
+            }
+            modal.classList.add('active');
+            // 聚焦到输入框
+            setTimeout(() => inputRemark.focus(), 100);
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            modal.classList.remove('active');
+            currentEditId = null;
+        }
+
+        // 保存数据
+        function saveData() {
+            const remarkText = inputRemark.value.trim();
+            const promptText = inputPrompt.value.trim();
+
+            if (!remarkText) {
+                alert('请填写人物备注噢～');
+                return;
+            }
+
+            if (currentEditId) {
+                // 更新现有数据
+                const index = characters.findIndex(c => c.id === currentEditId);
+                if (index !== -1) {
+                    characters[index].remark = remarkText;
+                    characters[index].prompt = promptText;
+                }
+            } else {
+                // 添加新数据 (用时间戳生成简易ID)
+                characters.push({
+                    id: Date.now().toString(),
+                    remark: remarkText,
+                    prompt: promptText
+                });
+            }
+
+            // 同步到 LocalStorage
+            localStorage.setItem('prompts_data', JSON.stringify(characters));
+            
+            renderCards();
+            closeModal();
+        }
+
+        // 删除数据
+        function deleteData() {
+            if(confirm('确定要删除这个设定吗？')) {
+                characters = characters.filter(c => c.id !== currentEditId);
+                localStorage.setItem('prompts_data', JSON.stringify(characters));
+                renderCards();
+                closeModal();
+            }
+        }
+
+        // 事件监听
+        btnSave.addEventListener('click', saveData);
+        btnCancel.addEventListener('click', closeModal);
+        btnDelete.addEventListener('click', deleteData);
+
+        // 点击遮罩层也可以关闭弹窗
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // 初始化渲染
+        renderCards();
+    </script>
+</body>
+</html>

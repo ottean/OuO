@@ -77,9 +77,6 @@
   header { margin-bottom: 28px; animation: fadeUp 0.5s ease both; position: relative; z-index: 100; }
 
   .header-pill {
-    position: fixed;
-    top: 20px;
-    left: 20px;
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -97,7 +94,31 @@
     transition: all 0.3s ease;
   }
 
-.header-pill:hover {
+/* 悬浮返回主页按钮 */
+.back-home-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 9999; /* 确保在最顶层 */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    color: #5c627a;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.back-home-btn:hover {
     background: rgba(255, 255, 255, 0.8);
     transform: translateX(-4px); /* 悬浮时微微向左滑动，提示返回 */
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
@@ -106,7 +127,7 @@
 
 /* 手机端适配稍微改小一点 */
 @media (max-width: 480px) {
-    .header-pill {
+    .back-home-btn {
         top: 15px;
         left: 15px;
         padding: 6px 12px;
@@ -1401,15 +1422,22 @@
 </style>
 </head>
 <body>
-    <a href="index.html" class="header-pill" >
-      <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Model Tracker
-    </a>
-    
+  <!-- 返回主页按钮 -->
+<a href="index.html" class="back-home-btn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    返回
+</a>
+
 <div class="container">
 
   <header>
-
+    <div class="header-pill">
+      <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+      Model Tracker
+    </div>
+    
     <div class="title-row">
       <h1>模型<span>性价比</span>追踪</h1>
       

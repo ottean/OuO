@@ -28,23 +28,22 @@
             position: relative;
         }
 
-        /* ================= 滚动条美化 (macOS/iOS 悬浮细条风) ================= */
+        /* 滚动条美化 (macOS/iOS 悬浮细条风) */
         ::-webkit-scrollbar {
-            width: 8px;  /* 竖向滚动条宽度 */
-            height: 8px; /* 横向滚动条高度 */
+            width: 8px;  
+            height: 8px; 
         }
         ::-webkit-scrollbar-track {
-            background: transparent; /* 轨道全透明 */
+            background: transparent; 
         }
         ::-webkit-scrollbar-thumb {
-            background-color: rgba(161, 196, 253, 0.5); /* 柔和浅冰蓝半透明 */
+            background-color: rgba(161, 196, 253, 0.5); 
             border-radius: 10px;
-            /* 利用边框挤出悬浮留白感 */
             border: 2px solid transparent;
             background-clip: padding-box;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(161, 196, 253, 0.9); /* 悬停时变深 */
+            background-color: rgba(161, 196, 253, 0.9); 
         }
 
         /* 背景液态模糊色块 */
@@ -69,7 +68,8 @@
         .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 40px 20px;
+            /* 整体上下边距减小，给编辑区留出更多天地 */
+            padding: 20px; 
         }
 
         .view {
@@ -77,8 +77,14 @@
             animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        .view.active {
-            display: block;
+        /* 列表视图设为 block */
+        #view-list.active { display: block; }
+
+        /* 编辑视图设为 flex，用来做高度的自适应吃满 */
+        #view-edit.active {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 40px); /* 减去容器的上下 padding */
         }
 
         @keyframes fadeIn {
@@ -88,7 +94,7 @@
 
         /* 头部与返回键 */
         header {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .back-link {
@@ -105,7 +111,7 @@
             text-decoration: none;
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(144, 153, 190, 0.1);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             cursor: pointer;
         }
 
@@ -132,19 +138,10 @@
             padding: 0 5px;
         }
 
-        .count-text {
-            font-size: 14px;
-            color: #9ba4c4;
-        }
-        .count-text strong {
-            color: #7983a8;
-            font-weight: 600;
-        }
+        .count-text { font-size: 14px; color: #9ba4c4; }
+        .count-text strong { color: #7983a8; font-weight: 600; }
 
-        .actions-right {
-            display: flex;
-            gap: 10px;
-        }
+        .actions-right { display: flex; gap: 10px; }
 
         .btn-tool {
             display: flex;
@@ -244,13 +241,14 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* ================= 沉浸式编辑页 ================= */
+        /* ================= 沉浸式编辑页 (高度自动延展优化) ================= */
         
         .edit-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-shrink: 0; /* 防止头部被压缩 */
         }
 
         .edit-header .back-link {
@@ -270,22 +268,20 @@
             box-shadow: 0 4px 15px rgba(161, 196, 253, 0.4);
         }
 
-        .btn-save:hover {
-            filter: brightness(0.95);
-            transform: scale(1.03);
-        }
+        .btn-save:hover { filter: brightness(0.95); transform: scale(1.03); }
         .btn-save:active { transform: scale(0.97); }
 
         /* 全屏沉浸编辑器主体 */
         .immersive-editor {
+            /* 关键修改：自动扩张吃满所有剩余高度 */
+            flex: 1; 
             display: flex;
             flex-direction: column;
-            padding: 30px;
-            height: calc(100vh - 200px); 
-            min-height: 500px; 
+            /* 关键修改：左右 padding 减小，去掉“厚重感” */
+            padding: 20px 15px; 
         }
 
-        /* 标题(备注)无边框输入 */
+        /* 标题无边框输入 */
         .input-title {
             width: 100%;
             background: transparent;
@@ -294,9 +290,10 @@
             font-weight: 600;
             color: var(--text-color);
             outline: none;
-            padding: 0 0 15px 0;
+            padding: 0 0 15px 5px; /* 左侧留点呼吸感 */
             margin-bottom: 15px;
             border-bottom: 1px solid rgba(144, 153, 190, 0.15); 
+            flex-shrink: 0;
         }
         
         .input-title::placeholder {
@@ -306,7 +303,7 @@
 
         /* 文本域包裹层 */
         .textarea-wrapper {
-            flex: 1; 
+            flex: 1; /* 占据编辑器内部所有高度 */
             display: flex;
             flex-direction: column;
             resize: vertical; 
@@ -320,8 +317,7 @@
             border: none;
             resize: none; 
             outline: none;
-            padding: 0;
-            /* 预留右侧边距，不让文字贴着我们好看的滚动条 */
+            padding: 0 5px; /* 统一呼吸感 */
             padding-right: 15px;
             padding-bottom: 25px; 
             font-size: 16px;
@@ -336,7 +332,11 @@
         /* 底部删除按钮 */
         .footer-actions {
             text-align: center;
-            margin-top: 25px;
+            /* 关键修改：推到最底部 */
+            margin-top: auto; 
+            padding-top: 15px;
+            padding-bottom: 10px;
+            flex-shrink: 0;
         }
 
         .btn-delete-text {
@@ -417,7 +417,7 @@
 
             <!-- 低调的文字删除键 -->
             <div class="footer-actions">
-                <button class="btn-delete-text" id="btn-delete" style="display: none;">删除当前人设</button>
+                <button class="btn-delete-text" id="btn-delete" style="display: none;">Zo选择丢弃该面具</button>
             </div>
 
         </div>

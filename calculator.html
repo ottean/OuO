@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZOの钱包为何总是空空</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 <style>
   /* 引入朱雀仿宋字体 (用于简约主题) */
   @font-face {
@@ -1953,16 +1954,12 @@ document.addEventListener('keydown', ev => {
   if (ev.key === 'Escape' && editingId) { editingId = null; render(); }
 });
 
-// ── 导入/导出无密码口令功能 (30分钟限时) ──
-
-// 解决 btoa 无法处理中文 Unicode 的问题
-function utoa(str) { return btoa(unescape(encodeURIComponent(str))); }
-function atou(str) { return decodeURIComponent(escape(atob(str))); }
+// ── 导入/导出压缩口令功能 (30分钟限时) ──
 
 function copyToClipboard(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => {
-      alert('✨ 导出成功！\n\n一串限时 30 分钟的同步口令已复制到剪贴板，请直接去另一台设备粘贴导入。');
+      alert('✨ 导出成功！\n\n压缩版口令(限时30分钟)已复制到剪贴板，快去另一台设备粘贴吧。');
     }).catch(() => fallbackCopy(text));
   } else { fallbackCopy(text); }
 }
@@ -1972,22 +1969,25 @@ function fallbackCopy(text) {
   ta.value = text; document.body.appendChild(ta); ta.select();
   try {
     document.execCommand('copy');
-    alert('✨ 导出成功！\n\n一串限时 30 分钟的同步口令已复制到剪贴板，请直接去另一台设备粘贴导入。');
+    alert('✨ 导出成功！\n\n压缩版口令(限时30分钟)已复制到剪贴板，快去另一台设备粘贴吧。');
   } catch(e) {
     alert('复制失败，请手动复制以下口令:\n\n' + text);
   }
   document.body.removeChild(ta);
 }
 
-// 导出为口令
+// 导出为压缩口令
 function exportData() {
   if (entries.length === 0) return alert('当前没有可导出的记录 🫧');
-  const pack = { t: Date.now(), d: entries };
-  const token = 'ZOZO-CALC-' + utoa(JSON.stringify(pack));
+  // 极简字段瘦身
+  const mini = entries.map(e => ({ i:e.id, s:e.source, m:e.model, r:e.ratio, p:e.price, n:e.note }));
+  const pack = { t: Date.now(), d: mini };
+  // 使用 LZString 深度压缩
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+  const token = 'ZOZOC-' + compressed;
   copyToClipboard(token);
 }
 
-// 打开/关闭导入弹窗
 function openImportModal() {
   document.getElementById('import-token').value = '';
   document.getElementById('importModal').classList.add('active');
@@ -1996,21 +1996,22 @@ function closeImportModal() {
   document.getElementById('importModal').classList.remove('active');
 }
 
-// 解析导入
+// 解析压缩导入
 function parseToken() {
   const token = document.getElementById('import-token').value.trim();
   if (!token) return alert('口令不能为空哦！');
-  if (!token.startsWith('ZOZO-CALC-')) return alert('口令格式错误，应该以 ZOZO-CALC- 开头！');
+  if (!token.startsWith('ZOZOC-')) return alert('口令格式错误，应该以 ZOZOC- 开头！');
   
   try {
-    const base64 = token.replace('ZOZO-CALC-', '');
-    const pack = JSON.parse(atou(base64));
+    const compressed = token.replace('ZOZOC-', '');
+    const jsonStr = LZString.decompressFromEncodedURIComponent(compressed);
+    if (!jsonStr) throw new Error('口令已损坏');
     
-    // 检查是否超过 30 分钟 (30 * 60 * 1000 = 1800000 毫秒)
+    const pack = JSON.parse(jsonStr);
     if (Date.now() - pack.t > 1800000) throw new Error('口令已过期 (超过30分钟)');
     
-    const importedData = pack.d;
-    if (!Array.isArray(importedData)) throw new Error('数据格式错误');
+    // 还原字段
+    const importedData = pack.d.map(e => ({ id:e.i, source:e.s, model:e.m, ratio:e.r, price:e.p, note:e.n }));
 
     if (confirm(`🔓 解析成功！共 ${importedData.length} 条记录。\n\n点击【确定】覆盖当前所有数据\n点击【取消】追加到列表后面`)) {
       entries = importedData;
@@ -2020,9 +2021,7 @@ function parseToken() {
       entries = [...newEntries, ...entries];
     }
     
-    save(); 
-    render(); 
-    closeImportModal();
+    save(); render(); closeImportModal();
     alert('导入成功！✨');
   } catch (e) {
     alert('解析失败：' + e.message);
@@ -2030,6 +2029,7 @@ function parseToken() {
 }
 
 render();
+
 </script>
 </body>
 </html>

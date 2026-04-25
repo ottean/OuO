@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zoの社交面具</title>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <style>
         /* 基础与字体 */
         :root {
@@ -337,14 +338,11 @@
             }
         }
 
-        // ── 无密码限时同步功能 ──
-        function utoa(str) { return btoa(unescape(encodeURIComponent(str))); }
-        function atou(str) { return decodeURIComponent(escape(atob(str))); }
-
+        // ── 高度压缩的无密码限时同步功能 ──
         function copyToClipboard(text) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
-                    alert('✨ 导出成功！\n\n一串限时 30 分钟的同步口令已复制到剪贴板，请直接去另一台设备粘贴导入。');
+                    alert('✨ 导出成功！\n\n极简压缩口令(限时30分钟)已复制到剪贴板，快去另一台设备粘贴吧。');
                 }).catch(() => fallbackCopy(text));
             } else { fallbackCopy(text); }
         }
@@ -354,7 +352,7 @@
             ta.value = text; document.body.appendChild(ta); ta.select();
             try {
                 document.execCommand('copy');
-                alert('✨ 导出成功！\n\n一串限时 30 分钟的同步口令已复制到剪贴板，请直接去另一台设备粘贴导入。');
+                alert('✨ 导出成功！\n\n极简压缩口令(限时30分钟)已复制到剪贴板，快去另一台设备粘贴吧。');
             } catch(e) {
                 alert('复制失败，请手动复制以下口令:\n\n' + text);
             }
@@ -363,8 +361,12 @@
 
         function exportData() {
             if (characters.length === 0) return alert('当前没有人设可以导出 🫧');
-            const pack = { t: Date.now(), d: characters };
-            const token = 'ZOZO-PROMPT-' + utoa(JSON.stringify(pack));
+            // 极简瘦身
+            const mini = characters.map(c => ({ i:c.id, r:c.remark, p:c.prompt }));
+            const pack = { t: Date.now(), d: mini };
+            // LZ-String 航天级压缩
+            const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+            const token = 'ZOZOP-' + compressed;
             copyToClipboard(token);
         }
 
@@ -379,16 +381,18 @@
         function parseToken() {
             const token = document.getElementById('import-token').value.trim();
             if (!token) return alert('口令不能为空哦！');
-            if (!token.startsWith('ZOZO-PROMPT-')) return alert('口令格式错误，应该以 ZOZO-PROMPT- 开头！');
+            if (!token.startsWith('ZOZOP-')) return alert('口令格式错误，应该以 ZOZOP- 开头！');
             
             try {
-                const base64 = token.replace('ZOZO-PROMPT-', '');
-                const pack = JSON.parse(atou(base64));
+                const compressed = token.replace('ZOZOP-', '');
+                const jsonStr = LZString.decompressFromEncodedURIComponent(compressed);
+                if (!jsonStr) throw new Error('口令已损坏');
                 
+                const pack = JSON.parse(jsonStr);
                 if (Date.now() - pack.t > 1800000) throw new Error('口令已过期 (超过30分钟)');
                 
-                const importedData = pack.d;
-                if (!Array.isArray(importedData)) throw new Error('数据格式错误');
+                // 还原数据
+                const importedData = pack.d.map(c => ({ id:c.i, remark:c.r, prompt:c.p }));
 
                 if (confirm(`🔓 解析成功！共读取 ${importedData.length} 个人设面具。\n\n点击【确定】覆盖当前所有数据\n点击【取消】追加到列表里`)) {
                     characters = importedData; 
@@ -414,6 +418,7 @@
         });
 
         renderCards();
+
     </script>
 </body>
 </html>

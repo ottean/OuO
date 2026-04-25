@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZO的钱包为何总是空空</title>
+<title>ZOの钱包为何总是空空</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   /* 引入朱雀仿宋字体 (用于简约主题) */
@@ -1430,7 +1430,7 @@
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M19 12H5M12 19l-7-7 7-7"/>
   </svg>
-  返回Zo的百宝箱
+  返回Zoの百宝箱
 </a>
 
     <div class="title-row">
@@ -1756,11 +1756,10 @@ function render() {
               <div class="detail-sub-lbl">额度 / 次</div>
             </div>
             <div class="detail-col calc-col">
-              <div class="detail-lbl">余额 → 可用次数</div>
+              <div class="detail-lbl">剩余额度 → 可用次数</div>
               <div class="calc-wrap" onclick="event.stopPropagation()">
-                <span class="calc-prefix">¥</span>
-                <input class="calc-input" type="text" placeholder="输入余额"
-                  data-ratio="${ratio}" data-price="${price}"
+                <input class="calc-input" type="text" placeholder="输入额度"
+                  data-price="${price}"
                   oninput="calcLive(this)" onclick="event.stopPropagation()">
               </div>
               <div class="calc-result">—</div>
@@ -1786,12 +1785,18 @@ function render() {
 }
 
 function calcLive(input) {
-  const ratio = parseFloat(input.dataset.ratio);
   const price = parseFloat(input.dataset.price);
-  const b = safeEval(input.value);
+  const quota = safeEval(input.value); // 现在输入的值代表剩余额度
   const resultEl = input.closest('.calc-col').querySelector('.calc-result');
-  if (!b || !ratio || !price) { resultEl.textContent = '—'; resultEl.className = 'calc-result'; return; }
-  const n = Math.floor((b * ratio) / price);
+  
+  if (!quota || !price) { 
+    resultEl.textContent = '—'; 
+    resultEl.className = 'calc-result'; 
+    return; 
+  }
+  
+  // 直接使用：剩余额度 / 每次单价
+  const n = Math.floor(quota / price);
   resultEl.textContent = n.toLocaleString() + ' 次可用';
   resultEl.className = 'calc-result hit';
 }

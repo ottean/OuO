@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zoの记录簿</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 4px 16px 0 rgba(31, 88, 115, 0.06);
+            --text-main: #1d1d1f;
+            --text-sub: #515154;
+            --hover-bg: rgba(255, 255, 255, 0.95);
+            --theme-blue-light: #73b9d7;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* 激活移动端全局点击态 */
+        body {
+            font-family: var(--font-family); color: var(--text-main); min-height: 100vh;
+            background-color: #EAF4F9; background-image: linear-gradient(135deg, #EAF4F9 0%, #F4F9FB 100%);
+            padding: 20px 12px 60px 12px; display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden; -webkit-font-smoothing: antialiased;
+        }
+
+        .blob { position: fixed; border-radius: 50%; filter: blur(60px); z-index: -1; opacity: 0.6; pointer-events: none;}
+        .blob-1 { top: 5%; left: 10%; width: 250px; height: 250px; background: #D0EAF5; animation: float 10s ease-in-out infinite; }
+        .blob-2 { bottom: 15%; right: 5%; width: 300px; height: 300px; background: #C2E2F0; animation: float 12s ease-in-out infinite reverse; }
+        @keyframes float { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } 100% { transform: translateY(0) scale(1); } }
+
+        /* 统一返回键样式 */
+        .header-top {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 999px;
+            color: var(--text-sub);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .back-link:hover, .back-link:active {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(-4px);
+            color: var(--text-main);
+        }
+
+        .header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; color: #113644; }
+
+        .header-actions { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
+
+        .search-container { position: relative; }
+        .search-icon-svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); width: 14px; height: 14px; pointer-events: none; }
+        .search-input {
+            width: 140px; padding: 8px 12px 8px 32px; border-radius: 16px;
+            border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.7);
+            font-size: 13px; color: var(--text-main); outline: none; transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); -webkit-appearance: none; 
+        }
+        .search-input:focus { width: 190px; background: #ffffff; border-color: var(--theme-blue-light); }
+
+        /* 统一的过渡时间，稍微缩短让反馈更干脆 */
+        .btn, .value-box, .action-icon, .add-btn-small, .remove-btn {
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+
+        /* 按钮样式与按压效果 */
+        .btn {
+            display: flex; align-items: center; gap: 4px;
+            background: rgba(255, 255, 255, 0.8); border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 10px 16px; border-radius: 16px; font-size: 13px; font-weight: 600; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); white-space: nowrap; 
+            transform-origin: center;
+        }
+        .btn:active { transform: scale(0.9) !important; opacity: 0.8; }
+        .btn-primary { background: var(--theme-blue-light); color: white; border: none; }
+        .btn-primary:active { background: #5fa5c4 !important; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); gap: 12px; width: 100%; max-width: 1200px; }
+        @media (min-width: 600px) { .grid-container { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+
+        /* 卡片基础样式，点击任意空白处唤起 */
+        .glass-card {
+            position: relative; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px;
+            box-shadow: var(--glass-shadow); transition: transform 0.1s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent; cursor: pointer;
+        }
+        /* 仅保留极其轻微的按压缩放，不加任何灰色背景 */
+        .glass-card:active { transform: scale(0.99); }
+        
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .card-title { font-size: 16px; font-weight: 600; }
+
+        /* V-IF 交互区：平时隐藏，卡片获得 active 类时显示 */
+        .card-actions { opacity: 0; display: flex; gap: 12px; pointer-events: none; transition: opacity 0.2s; }
+        .glass-card.active .card-actions { opacity: 1; pointer-events: auto; }
+        
+        .action-icon { color: var(--text-sub); padding: 4px; border-radius: 6px; }
+        .action-icon:active { transform: scale(0.85); background: rgba(0,0,0,0.05); color: var(--text-main); }
+        .action-icon.danger:active { color: #ff3b30; }
+
+        .info-row { display: flex; flex-direction: row; align-items: flex-start; margin-bottom: 10px; gap: 8px; width: 100%; }
+        .info-row:last-child { margin-bottom: 0; }
+        
+        .label {
+            font-size: 10px; font-weight: 600; color: var(--text-sub); text-transform: uppercase; 
+            width: 55px; flex-shrink: 0; margin-top: 10px; line-height: 1.1;
+        }
+        
+        .values-list { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        
+        /* 复制块 */
+        .value-box {
+            width: 100%; background: rgba(255, 255, 255, 0.8); border-radius: 10px; padding: 8px 12px;
+            font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; color: var(--text-main);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); 
+            border: 1px solid rgba(255,255,255,0.5); transform-origin: center center;
+        }
+        .value-box:active { background: #fff; transform: scale(0.96); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 100;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 20px; padding: 20px; width: 92%; max-width: 400px; max-height: 85vh; overflow-y: auto;
+            transform: translateY(20px); transition: transform 0.2s;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; text-align: center; }
+
+        .form-group { margin-bottom: 16px; background: rgba(0,0,0,0.02); padding: 12px; border-radius: 12px; width: 100%; }
+        .form-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .form-group-header label { font-size: 12px; font-weight: 600; color: var(--text-sub); }
+        
+        .add-btn-small { background: transparent; border: none; color: var(--theme-blue-light); font-size: 12px; font-weight: 600;}
+        .add-btn-small:active { transform: scale(0.85); opacity: 0.6; }
+
+        .dynamic-input-row { display: flex; gap: 8px; margin-bottom: 8px; width: 100%; align-items: center;}
+        .dynamic-input-row:last-child { margin-bottom: 0; }
+        
+        .form-control {
+            flex: 1; width: 100%; display: block; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #fff;
+            font-family: var(--font-family); font-size: 13px; outline: none; -webkit-appearance: none;
+        }
+        .form-control:focus { border-color: var(--theme-blue-light); }
+        
+        .remove-btn { background: transparent; border: none; color: #ff3b30; padding: 4px; display:flex; justify-content:center; align-items:center;}
+        .remove-btn:active { transform: scale(0.8); opacity: 0.6; }
+
+        .modal-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 20px; }
+        .modal-actions .btn { flex: 1; justify-content: center; }
+
+        #toast {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); color: #1d1d1f;
+            padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08); transition: transform 0.3s; opacity: 0; z-index: 1000;
+            display: flex; align-items: center; gap: 6px; pointer-events: none;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body ontouchstart="">
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="header">
+        <!-- 💡 返回工具箱按钮 -->
+        <div class="header-top">
+            <a href="index.html" class="back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                返回Zoの百宝箱
+            </a>
+        </div>
+
+        <h1>API 记录簿</h1>
+        <div class="header-actions">
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon-svg"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="搜索..." oninput="renderCards()">
+            </div>
+            <!-- 使用包裹函数延迟执行，让按压动画有时间展示 -->
+            <button class="btn" onclick="withDelay(openModal)">
+                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> 新增
+            </button>
+        </div>
+    </div>
+    
+    <div class="grid-container" id="card-container"></div>
+
+    <div id="toast">
+        <i data-lucide="check-circle" style="color: #34c759; width: 16px; height: 16px;"></i> 复制成功
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modalTitle">添加配置</h2>
+            
+            <div class="form-group">
+                <div class="form-group-header">
+                    <label>渠道名称</label>
+                </div>
+                <div class="dynamic-input-row">
+                    <input type="text" id="modal-name" class="form-control" placeholder="如：OpenAI 官方">
+                </div>
+            </div>
+
+            <div id="dynamic-form-container"></div>
+
+            <div class="modal-actions">
+                <!-- 取消和保存都延迟执行，欣赏动画 -->
+                <button class="btn" onclick="withDelay(closeModal)">取消</button>
+                <button class="btn btn-primary" onclick="withDelay(saveData)">
+                    <i data-lucide="save" style="width: 14px; height: 14px;"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('card-container');
+        const searchInput = document.getElementById('searchInput');
+        const modal = document.getElementById('editModal');
+        const dynamicFormContainer = document.getElementById('dynamic-form-container');
+        let toastTimeout;
+
+        let tempEditData = { name: '', urls: [''], keys: [''], models: [''] };
+        let editingIndex = -1;
+
+        let apiList = [];
+        const storedData = localStorage.getItem('apiRecords');
+        if (!storedData) {
+            apiList = defaultData; // Note: defaultData is missing in the file you provided, assuming it's empty array fallback
+            saveToStorage();
+        } else {
+            let parsed = JSON.parse(storedData);
+            apiList = parsed.map(item => ({
+                name: item.name || '',
+                urls: Array.isArray(item.urls) ? item.urls : (item.url ? [item.url] : []),
+                keys: Array.isArray(item.keys) ? item.keys : (item.key ? [item.key] : []),
+                models: Array.isArray(item.models) ? item.models : (item.model ? [item.model] : [])
+            }));
+            saveToStorage();
+        }
+
+        function saveToStorage() { localStorage.setItem('apiRecords', JSON.stringify(apiList)); }
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        // ====== 核心动画保证器：延迟150ms执行逻辑，让CSS:active动画飞一会 ======
+        function withDelay(callback, ...args) {
+            setTimeout(() => { callback(...args); }, 150);
+        }
+
+        // 点击卡片任意非阻止区域，即可唤起菜单
+        function toggleCardActive(elem) {
+            const isActive = elem.classList.contains('active');
+            document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active'));
+            if (!isActive) elem.classList.add('active');
+        }
+
+        function renderCards() {
+            container.innerHTML = '';
+            const keyword = searchInput.value.trim().toLowerCase();
+
+            const filteredData = apiList.filter(item => {
+                const nameMatch = item.name.toLowerCase().includes(keyword);
+                const urlMatch = item.urls.some(u => u.toLowerCase().includes(keyword));
+                const modelMatch = item.models.some(m => m.toLowerCase().includes(keyword));
+                return nameMatch || urlMatch || modelMatch;
+            });
+
+            if (filteredData.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:#999; grid-column:1/-1;">没有找到数据</div>`;
+            } else {
+                filteredData.forEach(item => {
+                    const originalIndex = apiList.indexOf(item);
+                    const card = document.createElement('div');
+                    card.className = 'glass-card';
+                    // 绑定点击事件到整个卡片
+                    card.onclick = function() { toggleCardActive(this); };
+
+                    const renderValues = (arr, isKey = false) => {
+                        if (arr.length === 0) return '<div class="value-box" style="color:#aaa">- 无 -</div>';
+                        return arr.map(val => {
+                            const safeVal = escapeHTML(val);
+                            const displayVal = isKey ? '••••••••' : safeVal;
+                            // 传入 event 并阻止冒泡，保证点击数值不会触发卡片整体点击
+                            return `<div class="value-box" onclick="copyToClipboard('${safeVal}', event)">${displayVal}</div>`;
+                        }).join('');
+                    };
+
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <div class="card-title">${escapeHTML(item.name || '未命名')}</div>
+                            <div class="card-actions">
+                                <!-- 点击编辑和删除也稍微延迟，保证按压动画展示 -->
+                                <div class="action-icon" onclick="withDelay(openModal, ${originalIndex}, event)">
+                                    <i data-lucide="pencil" style="width: 16px; height: 16px; pointer-events: none;"></i>
+                                </div>
+                                <div class="action-icon danger" onclick="withDelay(deleteData, ${originalIndex}, event)">
+                                    <i data-lucide="trash-2" style="width: 16px; height: 16px; pointer-events: none;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        ${item.urls.length ? `<div class="info-row"><div class="label">API URL</div><div class="values-list">${renderValues(item.urls)}</div></div>` : ''}
+                        ${item.keys.length ? `<div class="info-row"><div class="label">API KEY</div><div class="values-list">${renderValues(item.keys, true)}</div></div>` : ''}
+                        ${item.models.length ? `<div class="info-row"><div class="label">可用模型</div><div class="values-list">${renderValues(item.models)}</div></div>` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            lucide.createIcons();
+        }
+
+        // 点击页面空白处隐藏所有菜单
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.glass-card')) {
+                document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active'));
+            }
+        });
+
+        function renderModalForm() {
+            const buildSection = (title, fieldKey, arr, placeholder) => {
+                let html = `<div class="form-group">
+                    <div class="form-group-header">
+                        <label>${title}</label>
+                        <button class="add-btn-small" onclick="withDelay(addField, '${fieldKey}')">
+                            <i data-lucide="plus" style="width: 12px; height: 12px; pointer-events:none;"></i> 新增
+                        </button>
+                    </div>`;
+                if (arr.length === 0) {
+                    html += `<div style="font-size:12px; color:#aaa; padding: 4px 0;">暂无记录</div>`;
+                } else {
+                    arr.forEach((val, i) => {
+                        html += `<div class="dynamic-input-row">
+                            <input type="text" class="form-control modal-${fieldKey}" value="${escapeHTML(val)}" placeholder="${placeholder}">
+                            <button class="remove-btn" onclick="withDelay(removeField, '${fieldKey}', ${i})">
+                                <i data-lucide="minus-circle" style="width: 18px; height: 18px; pointer-events:none;"></i>
+                            </button>
+                        </div>`;
+                    });
+                }
+                html += `</div>`;
+                return html;
+            };
+
+            dynamicFormContainer.innerHTML = 
+                buildSection('API URLs', 'urls', tempEditData.urls, 'https://...') +
+                buildSection('API KEYs', 'keys', tempEditData.keys, 'sk-...') +
+                buildSection('模型名称', 'models', tempEditData.models, 'gpt-4 / claude...');
+            
+            lucide.createIcons();
+        }
+
+        function syncModalData() {
+            tempEditData.name = document.getElementById('modal-name').value;
+            const getVals = (cls) => Array.from(document.querySelectorAll(`.${cls}`)).map(i => i.value);
+            tempEditData.urls = getVals('modal-urls');
+            tempEditData.keys = getVals('modal-keys');
+            tempEditData.models = getVals('modal-models');
+        }
+
+        function addField(fieldKey) { syncModalData(); tempEditData[fieldKey].push(''); renderModalForm(); }
+        function removeField(fieldKey, index) { syncModalData(); tempEditData[fieldKey].splice(index, 1); renderModalForm(); }
+
+        function openModal(index = -1, e = null) {
+            if(e) e.stopPropagation();
+            editingIndex = index;
+            if (index === -1) {
+                document.getElementById('modalTitle').innerText = '添加新配置';
+                tempEditData = { name: '', urls: [''], keys: [''], models: [''] };
+            } else {
+                document.getElementById('modalTitle').innerText = '编辑配置';
+                const item = apiList[index];
+                tempEditData = { name: item.name, urls: [...item.urls], keys: [...item.keys], models: [...item.models] };
+            }
+            document.getElementById('modal-name').value = tempEditData.name;
+            renderModalForm();
+            modal.classList.add('active');
+        }
+
+        function closeModal() { modal.classList.remove('active'); }
+
+        function saveData() {
+            syncModalData(); 
+            const cleanArray = (arr) => arr.map(s => s.trim()).filter(s => s !== '');
+            const newItem = {
+                name: tempEditData.name.trim(),
+                urls: cleanArray(tempEditData.urls),
+                keys: cleanArray(tempEditData.keys),
+                models: cleanArray(tempEditData.models),
+            };
+            if (editingIndex === -1) apiList.push(newItem);
+            else apiList[editingIndex] = newItem;
+
+            saveToStorage(); renderCards(); closeModal();
+        }
+
+        function deleteData(index, e) {
+            if(e) e.stopPropagation();
+            if (confirm('确定要删除这个渠道吗？')) {
+                apiList.splice(index, 1); saveToStorage(); renderCards();
+            }
+        }
+
+        function copyToClipboard(text, e) {
+            e.stopPropagation(); // 关键：拦截事件，不会唤起卡片
+            if (!text) return;
+            // 同样稍微延迟触发，欣赏按压框的回弹效果
+            setTimeout(() => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => showToast()).catch(() => fallbackCopy(text));
+                } else { fallbackCopy(text); }
+            }, 100);
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text; textArea.style.position = "fixed"; textArea.style.opacity = "0";
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            try { document.execCommand('copy'); showToast(); } catch (ex) {}
+            document.body.removeChild(textArea);
+        }
+
+        function showToast() {
+            clearTimeout(toastTimeout);
+            const t = document.getElementById('toast');
+            t.classList.add('show');
+            toastTimeout = setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        renderCards();
+    </script>
+</body>
+</html>

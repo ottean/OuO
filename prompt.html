@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>百变Zo登场</title>
+    <title>人设管理器</title>
     <style>
-        /* 基础与字体，采用仿iOS字体 */
+        /* 基础与字体 */
         :root {
             --text-color: #5c627a;
             --glass-bg: rgba(255, 255, 255, 0.45);
@@ -28,6 +28,25 @@
             position: relative;
         }
 
+        /* ================= 滚动条美化 (macOS/iOS 悬浮细条风) ================= */
+        ::-webkit-scrollbar {
+            width: 8px;  /* 竖向滚动条宽度 */
+            height: 8px; /* 横向滚动条高度 */
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; /* 轨道全透明 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(161, 196, 253, 0.5); /* 柔和浅冰蓝半透明 */
+            border-radius: 10px;
+            /* 利用边框挤出悬浮留白感 */
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(161, 196, 253, 0.9); /* 悬停时变深 */
+        }
+
         /* 背景液态模糊色块 */
         .bg-blob {
             position: fixed;
@@ -46,11 +65,25 @@
             100% { transform: translate(5%, 5%) scale(1.1); }
         }
 
-        /* 容器 */
+        /* 视图容器与动画 */
         .container {
             max-width: 900px;
             margin: 0 auto;
             padding: 40px 20px;
+        }
+
+        .view {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* 头部与返回键 */
@@ -73,6 +106,7 @@
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(144, 153, 190, 0.1);
             margin-bottom: 20px;
+            cursor: pointer;
         }
 
         .back-link:hover {
@@ -151,13 +185,13 @@
             gap: 20px;
         }
 
-        /* 卡片样式更新 */
+        /* 卡片样式 */
         .card {
             height: 120px;
             display: flex;
-            align-items: center;      /* 完美垂直居中 */
-            justify-content: center;  /* 完美水平居中 */
-            position: relative;       /* 为底部字数提供定位基准 */
+            align-items: center;
+            justify-content: center;
+            position: relative;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             text-align: center;
@@ -172,7 +206,6 @@
             box-shadow: 0 12px 40px 0 rgba(144, 153, 190, 0.25);
         }
 
-        /* 备注名：20px */
         .card-name {
             font-size: 20px;
             font-weight: 600;
@@ -181,11 +214,9 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            /* 给底部预留一点空间，防止两行文字时和字数重叠 */
             margin-bottom: 8px; 
         }
 
-        /* 字数：8px，且绝对定位在下面中心 */
         .card-count {
             font-size: 8px;
             color: #9ba4c4;
@@ -198,10 +229,9 @@
             bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
-            white-space: nowrap; /* 强制不换行 */
+            white-space: nowrap;
         }
 
-        /* 添加按钮卡片 */
         .add-card {
             font-size: 36px;
             color: #9ba4c4;
@@ -214,132 +244,116 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* 弹窗遮罩 */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(230, 235, 245, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+        /* ================= 沉浸式编辑页 ================= */
+        
+        .edit-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 100;
+            margin-bottom: 20px;
         }
 
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
+        .edit-header .back-link {
+            margin-bottom: 0; 
         }
 
-        /* 弹窗内容 */
-        .modal-content {
-            width: 90%;
-            max-width: 600px;
-            padding: 30px;
-            transform: translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
-
-        /* 文本框基础样式 */
-        input[type="text"] {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 16px;
-            padding: 15px;
-            font-size: 16px;
-            color: var(--text-color);
-            outline: none;
+        .btn-save {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: inset 0 2px 5px rgba(144, 153, 190, 0.05);
+            background: #a1c4fd; 
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(161, 196, 253, 0.4);
         }
 
-        input[type="text"]:focus {
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 3px rgba(194, 233, 251, 0.5);
+        .btn-save:hover {
+            filter: brightness(0.95);
+            transform: scale(1.03);
         }
+        .btn-save:active { transform: scale(0.97); }
 
-        /* 💡 文本域包裹层：解决移动端拖拽角被覆盖的问题 */
-        .textarea-wrapper {
-            width: 100%;
-            min-height: 250px;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 16px;
-            box-shadow: inset 0 2px 5px rgba(144, 153, 190, 0.05);
-            /* 将伸缩功能交给包裹层 */
-            resize: vertical;
-            overflow: hidden; 
+        /* 全屏沉浸编辑器主体 */
+        .immersive-editor {
             display: flex;
             flex-direction: column;
-            transition: background 0.2s ease, box-shadow 0.2s ease;
+            padding: 30px;
+            height: calc(100vh - 200px); 
+            min-height: 500px; 
         }
 
-        .textarea-wrapper:focus-within {
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 3px rgba(194, 233, 251, 0.5);
-        }
-
-        /* 内部真正的文本域 */
-        textarea {
-            flex: 1; /* 撑满包裹层 */
+        /* 标题(备注)无边框输入 */
+        .input-title {
             width: 100%;
             background: transparent;
             border: none;
-            resize: none; /* 禁用原生的伸缩，因为父级在伸缩 */
-            outline: none;
-            padding: 15px;
-            /* 预留右下角的边距，避开父级的拖拽热区 */
-            padding-right: 20px;
-            padding-bottom: 20px;
-            font-size: 15px;
+            font-size: 24px;
+            font-weight: 600;
             color: var(--text-color);
-            line-height: 1.6;
+            outline: none;
+            padding: 0 0 15px 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(144, 153, 190, 0.15); 
+        }
+        
+        .input-title::placeholder {
+            color: #b0b6cf;
+            font-weight: 500;
         }
 
-        input::placeholder, textarea::placeholder {
+        /* 文本域包裹层 */
+        .textarea-wrapper {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            resize: vertical; 
+            overflow: hidden; 
+        }
+
+        .input-body {
+            flex: 1; 
+            width: 100%;
+            background: transparent;
+            border: none;
+            resize: none; 
+            outline: none;
+            padding: 0;
+            /* 预留右侧边距，不让文字贴着我们好看的滚动条 */
+            padding-right: 15px;
+            padding-bottom: 25px; 
+            font-size: 16px;
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        .input-body::placeholder {
             color: #b0b6cf;
         }
 
-        /* 按钮区域 */
-        .actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 10px;
+        /* 底部删除按钮 */
+        .footer-actions {
+            text-align: center;
+            margin-top: 25px;
         }
 
-        .modal-btn {
-            padding: 10px 24px;
+        .btn-delete-text {
+            background: transparent;
             border: none;
-            border-radius: 20px;
+            color: #ff9fb0; 
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-            color: #fff;
+            padding: 10px 20px;
+            transition: color 0.2s;
         }
 
-        .btn-cancel { background: #d3d8e8; color: #6a7495; }
-        .btn-delete { background: #ffb6c1; margin-right: auto; }
-        .btn-save   { background: #a1c4fd; }
-
-        .modal-btn:hover { filter: brightness(0.95); transform: scale(1.05); }
-        .modal-btn:active { transform: scale(0.95); }
+        .btn-delete-text:hover {
+            color: #ff748c;
+            text-decoration: underline;
+        }
 
     </style>
 </head>
@@ -350,71 +364,98 @@
     <div class="bg-blob blob-3"></div>
 
     <div class="container">
-        <header>
-            <a href="index.html" class="back-link">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                返回Zo的百宝箱
-            </a>
-            <h1>人设管理器</h1>
-        </header>
+        
+        <!-- ================= 视图 1：主列表 ================= -->
+        <div id="view-list" class="view active">
+            <header>
+                <a href="index.html" class="back-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    返回Zo的百宝箱
+                </a>
+                <h1>奇迹ZoZo登场</h1>
+            </header>
 
-        <!-- 工具栏：统计与导入导出 -->
-        <div class="toolbar">
-            <div class="count-text">共 <strong id="prompt-count">0</strong> 个人设卡片</div>
+            <div class="toolbar">
+                <div class="count-text">共 <strong id="prompt-count">0</strong> 个人设卡片</div>
+                <div class="actions-right">
+                    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                    <button class="btn-tool" onclick="document.getElementById('import-file').click()">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12V4m0 0L5 7m3-3l3 3M2 14h12"/></svg>
+                        导入
+                    </button>
+                    <button class="btn-tool" onclick="exportData()">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4v8m0 0l-3-3m3 3l3-3M2 14h12"/></svg>
+                        导出
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid" id="card-container">
+                <!-- 卡片动态生成区 -->
+            </div>
+        </div>
+
+        <!-- ================= 视图 2：沉浸式编辑页 ================= -->
+        <div id="view-edit" class="view">
             
-            <div class="actions-right">
-                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
-                <button class="btn-tool" onclick="document.getElementById('import-file').click()">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12V4m0 0L5 7m3-3l3 3M2 14h12"/></svg>
-                    导入
+            <header class="edit-header">
+                <button class="back-link" onclick="switchView('list')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    返回Zo的衣柜
                 </button>
-                <button class="btn-tool" onclick="exportData()">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4v8m0 0l-3-3m3 3l3-3M2 14h12"/></svg>
-                    导出
-                </button>
+                <button class="btn-save" id="btn-save">保存</button>
+            </header>
+
+            <!-- 无边框沉浸式编辑器 -->
+            <div class="immersive-editor glass">
+                <input type="text" id="input-remark" class="input-title" placeholder="输入人物备注...">
+                
+                <div class="textarea-wrapper">
+                    <textarea id="input-prompt" class="input-body" placeholder="在这里自由输入或粘贴你的 Prompt 人设设定..."></textarea>
+                </div>
             </div>
+
+            <!-- 低调的文字删除键 -->
+            <div class="footer-actions">
+                <button class="btn-delete-text" id="btn-delete" style="display: none;">删除当前人设</button>
+            </div>
+
         </div>
 
-        <div class="grid" id="card-container">
-            <!-- 卡片将通过 JS 动态生成 -->
-        </div>
-    </div>
-
-    <!-- 编辑/添加弹窗 -->
-    <div class="modal-overlay" id="modal">
-        <div class="modal-content glass">
-            <input type="text" id="input-remark" placeholder="输入人物备注 (如：傲娇小猫)">
-            
-            <!-- 加入包裹层 -->
-            <div class="textarea-wrapper">
-                <textarea id="input-prompt" placeholder="在这里粘贴完整的 Prompt 人设设定..."></textarea>
-            </div>
-            
-            <div class="actions">
-                <button class="modal-btn btn-delete" id="btn-delete" style="display: none;">删除</button>
-                <button class="modal-btn btn-cancel" id="btn-cancel">取消</button>
-                <button class="modal-btn btn-save" id="btn-save">保存</button>
-            </div>
-        </div>
     </div>
 
     <script>
         let characters = JSON.parse(localStorage.getItem('prompts_data')) || [];
         let currentEditId = null;
 
+        // DOM 元素
+        const viewList = document.getElementById('view-list');
+        const viewEdit = document.getElementById('view-edit');
         const container = document.getElementById('card-container');
         const countText = document.getElementById('prompt-count');
-        const modal = document.getElementById('modal');
         const inputRemark = document.getElementById('input-remark');
         const inputPrompt = document.getElementById('input-prompt');
         const btnSave = document.getElementById('btn-save');
-        const btnCancel = document.getElementById('btn-cancel');
         const btnDelete = document.getElementById('btn-delete');
 
         // 计算字符数（去空白符）
         function getCharCount(text) {
             if (!text) return 0;
             return text.replace(/\s+/g, '').length;
+        }
+
+        // 切换视图 (SPA)
+        function switchView(viewName) {
+            if (viewName === 'list') {
+                viewEdit.classList.remove('active');
+                viewList.classList.add('active');
+                currentEditId = null;
+                renderCards(); 
+            } else if (viewName === 'edit') {
+                viewList.classList.remove('active');
+                viewEdit.classList.add('active');
+                window.scrollTo(0, 0); 
+            }
         }
 
         // 渲染主页卡片
@@ -426,14 +467,12 @@
             characters.forEach(char => {
                 const card = document.createElement('div');
                 card.className = 'card glass';
-                card.onclick = () => openModal(char.id);
+                card.onclick = () => openEditor(char.id);
 
-                // 创建名字行
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'card-name';
                 nameDiv.textContent = char.remark;
 
-                // 创建字数行
                 const charCount = getCharCount(char.prompt);
                 const countDiv = document.createElement('div');
                 countDiv.className = 'card-count';
@@ -449,31 +488,25 @@
             const addCard = document.createElement('div');
             addCard.className = 'card glass add-card';
             addCard.textContent = '+';
-            addCard.onclick = () => openModal(null);
+            addCard.onclick = () => openEditor(null);
             container.appendChild(addCard);
         }
 
-        // 打开弹窗
-        function openModal(id) {
+        // 打开全屏编辑器
+        function openEditor(id) {
             currentEditId = id;
             if (id) {
                 const char = characters.find(c => c.id === id);
                 inputRemark.value = char.remark;
                 inputPrompt.value = char.prompt;
-                btnDelete.style.display = 'block';
+                btnDelete.style.display = 'inline-block';
             } else {
                 inputRemark.value = '';
                 inputPrompt.value = '';
                 btnDelete.style.display = 'none';
             }
-            modal.classList.add('active');
-            setTimeout(() => inputRemark.focus(), 100);
-        }
-
-        // 关闭弹窗
-        function closeModal() {
-            modal.classList.remove('active');
-            currentEditId = null;
+            switchView('edit');
+            setTimeout(() => inputRemark.focus(), 100); 
         }
 
         // 保存数据
@@ -501,17 +534,15 @@
             }
 
             localStorage.setItem('prompts_data', JSON.stringify(characters));
-            renderCards();
-            closeModal();
+            switchView('list'); 
         }
 
         // 删除数据
         function deleteData() {
-            if(confirm('确定要删除这个设定吗？')) {
+            if(confirm('确定要彻底删除这个人设吗？')) {
                 characters = characters.filter(c => c.id !== currentEditId);
                 localStorage.setItem('prompts_data', JSON.stringify(characters));
-                renderCards();
-                closeModal();
+                switchView('list');
             }
         }
 
@@ -568,13 +599,12 @@
 
         // 事件监听
         btnSave.addEventListener('click', saveData);
-        btnCancel.addEventListener('click', closeModal);
         btnDelete.addEventListener('click', deleteData);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-        // 快捷键支持
         document.addEventListener('keydown', ev => {
-            if (ev.key === 'Escape' && modal.classList.contains('active')) closeModal();
+            if (ev.key === 'Escape' && viewEdit.classList.contains('active')) {
+                switchView('list');
+            }
         });
 
         // 初始化渲染

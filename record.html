@@ -19,7 +19,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 激活移动端全局点击态 */
         body {
             font-family: var(--font-family); color: var(--text-main); min-height: 100vh;
             background-color: #EAF4F9; background-image: linear-gradient(135deg, #EAF4F9 0%, #F4F9FB 100%);
@@ -65,48 +64,47 @@
         .header { text-align: center; margin-bottom: 20px; width: 100%; max-width: 1200px; }
         h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; color: #113644; }
 
-        .header-actions { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
+        .header-actions { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; }
 
-        .search-container { position: relative; }
+        .search-container { position: relative; flex: 1; max-width: 200px; }
         .search-icon-svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); width: 14px; height: 14px; pointer-events: none; }
         .search-input {
-            width: 140px; padding: 8px 12px 8px 32px; border-radius: 16px;
+            width: 100%; padding: 8px 12px 8px 32px; border-radius: 16px;
             border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.7);
-            font-size: 13px; color: var(--text-main); outline: none; transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-size: 13px; color: var(--text-main); outline: none; transition: all 0.3s;
             box-shadow: 0 2px 8px rgba(0,0,0,0.02); -webkit-appearance: none; 
         }
-        .search-input:focus { width: 190px; background: #ffffff; border-color: var(--theme-blue-light); }
+        .search-input:focus { background: #ffffff; border-color: var(--theme-blue-light); }
 
-        /* 统一的过渡时间，稍微缩短让反馈更干脆 */
-        .btn, .value-box, .action-icon, .add-btn-small, .remove-btn {
+        .btn, .btn-icon, .value-box, .action-icon, .add-btn-small, .remove-btn {
             transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
-            -webkit-tap-highlight-color: transparent;
-            cursor: pointer;
+            -webkit-tap-highlight-color: transparent; cursor: pointer;
         }
 
-        /* 按钮样式与按压效果 */
         .btn {
             display: flex; align-items: center; gap: 4px;
             background: rgba(255, 255, 255, 0.8); border: 1px solid var(--glass-border); color: var(--text-main);
-            padding: 10px 16px; border-radius: 16px; font-size: 13px; font-weight: 600; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02); white-space: nowrap; 
-            transform-origin: center;
+            padding: 10px 14px; border-radius: 16px; font-size: 13px; font-weight: 600; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); white-space: nowrap; transform-origin: center;
         }
-        .btn:active { transform: scale(0.9) !important; opacity: 0.8; }
+        .btn-icon {
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.8); border: 1px solid var(--glass-border); color: var(--text-sub);
+            padding: 10px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .btn:active, .btn-icon:active { transform: scale(0.9) !important; opacity: 0.8; }
         .btn-primary { background: var(--theme-blue-light); color: white; border: none; }
         .btn-primary:active { background: #5fa5c4 !important; }
 
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); gap: 12px; width: 100%; max-width: 1200px; }
         @media (min-width: 600px) { .grid-container { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
 
-        /* 卡片基础样式，点击任意空白处唤起 */
         .glass-card {
             position: relative; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px;
             box-shadow: var(--glass-shadow); transition: transform 0.1s, box-shadow 0.2s;
             -webkit-tap-highlight-color: transparent; cursor: pointer;
         }
-        /* 仅保留极其轻微的按压缩放，不加任何灰色背景 */
         .glass-card:active { transform: scale(0.99); }
         
         .card-header {
@@ -115,7 +113,6 @@
         }
         .card-title { font-size: 16px; font-weight: 600; }
 
-        /* V-IF 交互区：平时隐藏，卡片获得 active 类时显示 */
         .card-actions { opacity: 0; display: flex; gap: 12px; pointer-events: none; transition: opacity 0.2s; }
         .glass-card.active .card-actions { opacity: 1; pointer-events: auto; }
         
@@ -133,7 +130,6 @@
         
         .values-list { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         
-        /* 复制块 */
         .value-box {
             width: 100%; background: rgba(255, 255, 255, 0.8); border-radius: 10px; padding: 8px 12px;
             font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; color: var(--text-main);
@@ -170,7 +166,7 @@
         
         .form-control {
             flex: 1; width: 100%; display: block; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #fff;
-            font-family: var(--font-family); font-size: 13px; outline: none; -webkit-appearance: none;
+            font-family: var(--font-family); font-size: 13px; outline: none; -webkit-appearance: none; transition: border-color 0.2s;
         }
         .form-control:focus { border-color: var(--theme-blue-light); }
         
@@ -196,7 +192,6 @@
     <div class="blob blob-2"></div>
 
     <div class="header">
-        <!-- 💡 返回工具箱按钮 -->
         <div class="header-top">
             <a href="index.html" class="back-link">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -205,13 +200,21 @@
         </div>
 
         <h1>API 记录簿</h1>
+        
+        <!-- 💡 工具栏：添加了导入和导出 -->
         <div class="header-actions">
             <div class="search-container">
                 <i data-lucide="search" class="search-icon-svg"></i>
                 <input type="text" id="searchInput" class="search-input" placeholder="搜索..." oninput="renderCards()">
             </div>
-            <!-- 使用包裹函数延迟执行，让按压动画有时间展示 -->
-            <button class="btn" onclick="withDelay(openModal)">
+            
+            <button class="btn-icon" onclick="withDelay(openImportModal)" title="导入加密口令">
+                <i data-lucide="download"></i>
+            </button>
+            <button class="btn-icon" onclick="withDelay(openExportModal)" title="生成加密口令">
+                <i data-lucide="upload"></i>
+            </button>
+            <button class="btn btn-primary" onclick="withDelay(openModal)">
                 <i data-lucide="plus" style="width: 14px; height: 14px;"></i> 新增
             </button>
         </div>
@@ -220,13 +223,14 @@
     <div class="grid-container" id="card-container"></div>
 
     <div id="toast">
-        <i data-lucide="check-circle" style="color: #34c759; width: 16px; height: 16px;"></i> 复制成功
+        <i data-lucide="check-circle" id="toast-icon" style="color: #34c759; width: 16px; height: 16px;"></i> 
+        <span id="toast-msg">复制成功</span>
     </div>
 
+    <!-- 添加/编辑 配置弹窗 -->
     <div class="modal-overlay" id="editModal">
         <div class="modal-content">
             <h2 class="modal-title" id="modalTitle">添加配置</h2>
-            
             <div class="form-group">
                 <div class="form-group-header">
                     <label>渠道名称</label>
@@ -235,14 +239,43 @@
                     <input type="text" id="modal-name" class="form-control" placeholder="如：OpenAI 官方">
                 </div>
             </div>
-
             <div id="dynamic-form-container"></div>
-
             <div class="modal-actions">
-                <!-- 取消和保存都延迟执行，欣赏动画 -->
                 <button class="btn" onclick="withDelay(closeModal)">取消</button>
                 <button class="btn btn-primary" onclick="withDelay(saveData)">
                     <i data-lucide="save" style="width: 14px; height: 14px;"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 导出加密口令弹窗 -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-content" style="max-width: 320px;">
+            <h2 class="modal-title">生成加密口令</h2>
+            <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 16px; text-align: center; line-height: 1.5;">
+                设定一个提取密码。<br>口令将被加密，只能使用此密码解开。
+            </p>
+            <input type="password" id="export-pwd" class="form-control" placeholder="设置任意解密密码 (如: 1234)" style="margin-bottom: 20px;">
+            <div class="modal-actions">
+                <button class="btn" onclick="withDelay(closeExportModal)">取消</button>
+                <button class="btn btn-primary" onclick="withDelay(generateToken)">
+                    <i data-lucide="copy" style="width: 14px; height: 14px;"></i> 复制口令
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 导入加密口令弹窗 -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-content" style="max-width: 320px;">
+            <h2 class="modal-title">导入加密口令</h2>
+            <input type="text" id="import-token" class="form-control" placeholder="粘贴 ZOZO- 开头的口令" style="margin-bottom: 10px;">
+            <input type="password" id="import-pwd" class="form-control" placeholder="输入对应的解密密码" style="margin-bottom: 20px;">
+            <div class="modal-actions">
+                <button class="btn" onclick="withDelay(closeImportModal)">取消</button>
+                <button class="btn btn-primary" onclick="withDelay(parseToken)">
+                    <i data-lucide="unlock" style="width: 14px; height: 14px;"></i> 解密导入
                 </button>
             </div>
         </div>
@@ -261,7 +294,7 @@
         let apiList = [];
         const storedData = localStorage.getItem('apiRecords');
         if (!storedData) {
-            apiList = defaultData; // Note: defaultData is missing in the file you provided, assuming it's empty array fallback
+            apiList = [];
             saveToStorage();
         } else {
             let parsed = JSON.parse(storedData);
@@ -282,12 +315,10 @@
             }[tag] || tag));
         }
 
-        // ====== 核心动画保证器：延迟150ms执行逻辑，让CSS:active动画飞一会 ======
         function withDelay(callback, ...args) {
             setTimeout(() => { callback(...args); }, 150);
         }
 
-        // 点击卡片任意非阻止区域，即可唤起菜单
         function toggleCardActive(elem) {
             const isActive = elem.classList.contains('active');
             document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active'));
@@ -312,7 +343,6 @@
                     const originalIndex = apiList.indexOf(item);
                     const card = document.createElement('div');
                     card.className = 'glass-card';
-                    // 绑定点击事件到整个卡片
                     card.onclick = function() { toggleCardActive(this); };
 
                     const renderValues = (arr, isKey = false) => {
@@ -320,7 +350,6 @@
                         return arr.map(val => {
                             const safeVal = escapeHTML(val);
                             const displayVal = isKey ? '••••••••' : safeVal;
-                            // 传入 event 并阻止冒泡，保证点击数值不会触发卡片整体点击
                             return `<div class="value-box" onclick="copyToClipboard('${safeVal}', event)">${displayVal}</div>`;
                         }).join('');
                     };
@@ -329,7 +358,6 @@
                         <div class="card-header">
                             <div class="card-title">${escapeHTML(item.name || '未命名')}</div>
                             <div class="card-actions">
-                                <!-- 点击编辑和删除也稍微延迟，保证按压动画展示 -->
                                 <div class="action-icon" onclick="withDelay(openModal, ${originalIndex}, event)">
                                     <i data-lucide="pencil" style="width: 16px; height: 16px; pointer-events: none;"></i>
                                 </div>
@@ -348,13 +376,13 @@
             lucide.createIcons();
         }
 
-        // 点击页面空白处隐藏所有菜单
         document.addEventListener('click', (e) => {
             if(!e.target.closest('.glass-card')) {
                 document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active'));
             }
         });
 
+        // ==== 常规表单与增删改 ====
         function renderModalForm() {
             const buildSection = (title, fieldKey, arr, placeholder) => {
                 let html = `<div class="form-group">
@@ -439,30 +467,128 @@
             }
         }
 
-        function copyToClipboard(text, e) {
-            e.stopPropagation(); // 关键：拦截事件，不会唤起卡片
-            if (!text) return;
-            // 同样稍微延迟触发，欣赏按压框的回弹效果
-            setTimeout(() => {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text).then(() => showToast()).catch(() => fallbackCopy(text));
-                } else { fallbackCopy(text); }
-            }, 100);
+
+        // ================= 极客级：加密口令导入导出系统 =================
+
+        // 异或加密核心算法 (保证 Unicode 中文不乱码)
+        function xorEncrypt(text, pwd) {
+            const textBytes = new TextEncoder().encode(text);
+            const pwdBytes = new TextEncoder().encode(pwd);
+            const resultBytes = new Uint8Array(textBytes.length);
+            for (let i = 0; i < textBytes.length; i++) {
+                resultBytes[i] = textBytes[i] ^ pwdBytes[i % pwdBytes.length];
+            }
+            // Uint8Array 转 Base64
+            let binary = '';
+            for (let i = 0; i < resultBytes.length; i++) {
+                binary += String.fromCharCode(resultBytes[i]);
+            }
+            return 'ZOZO-' + btoa(binary);
         }
 
-        function fallbackCopy(text) {
+        // 解密算法
+        function xorDecrypt(token, pwd) {
+            if (!token.startsWith('ZOZO-')) throw new Error('口令格式错误');
+            const binary = atob(token.slice(5));
+            const encryptedBytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                encryptedBytes[i] = binary.charCodeAt(i);
+            }
+            const pwdBytes = new TextEncoder().encode(pwd);
+            const decryptedBytes = new Uint8Array(encryptedBytes.length);
+            for (let i = 0; i < encryptedBytes.length; i++) {
+                decryptedBytes[i] = encryptedBytes[i] ^ pwdBytes[i % pwdBytes.length];
+            }
+            return new TextDecoder().decode(decryptedBytes);
+        }
+
+        // 打开导出面板
+        function openExportModal() {
+            if (apiList.length === 0) return showToast('没有可以导出的数据 🫙', 'alert-circle', '#ff9500');
+            document.getElementById('export-pwd').value = '';
+            document.getElementById('exportModal').classList.add('active');
+        }
+        function closeExportModal() { document.getElementById('exportModal').classList.remove('active'); }
+
+        // 生成口令并复制
+        function generateToken() {
+            const pwd = document.getElementById('export-pwd').value;
+            if (!pwd) return showToast('必须要设置密码才能加密哦！', 'alert-circle', '#ff9500');
+            try {
+                const jsonStr = JSON.stringify(apiList);
+                const token = xorEncrypt(jsonStr, pwd);
+                copyToClipboardRaw(token, '加密口令已复制，快去粘贴吧！ 🚀');
+                closeExportModal();
+            } catch (e) {
+                showToast('加密失败', 'alert-circle', '#ff3b30');
+            }
+        }
+
+        // 打开导入面板
+        function openImportModal() {
+            document.getElementById('import-token').value = '';
+            document.getElementById('import-pwd').value = '';
+            document.getElementById('importModal').classList.add('active');
+        }
+        function closeImportModal() { document.getElementById('importModal').classList.remove('active'); }
+
+        // 解析并导入口令
+        function parseToken() {
+            const token = document.getElementById('import-token').value.trim();
+            const pwd = document.getElementById('import-pwd').value;
+            if (!token || !pwd) return showToast('口令和密码都不能为空！', 'alert-circle', '#ff9500');
+
+            try {
+                const jsonStr = xorDecrypt(token, pwd);
+                const importedData = JSON.parse(jsonStr);
+                if (!Array.isArray(importedData)) throw new Error('Data format error');
+
+                if (confirm(`🔓 解密成功！共包含 ${importedData.length} 条 API 配置。\n\n点击【确定】将覆盖当前所有数据\n点击【取消】将追加到列表后面`)) {
+                    apiList = importedData;
+                } else {
+                    apiList = [...importedData, ...apiList];
+                }
+                
+                saveToStorage(); renderCards(); closeImportModal();
+                showToast('导入成功！✨', 'check-circle', '#34c759');
+            } catch (e) {
+                showToast('解密失败：密码错误或口令不完整！', 'x-circle', '#ff3b30');
+            }
+        }
+
+        // ==== 剪贴板与提示 ====
+        function copyToClipboardRaw(text, customMsg = '复制成功') {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => showToast(customMsg)).catch(() => fallbackCopy(text, customMsg));
+            } else { fallbackCopy(text, customMsg); }
+        }
+
+        function copyToClipboard(text, e) {
+            e.stopPropagation(); 
+            if (!text) return;
+            setTimeout(() => { copyToClipboardRaw(text); }, 100);
+        }
+
+        function fallbackCopy(text, customMsg) {
             const textArea = document.createElement("textarea");
             textArea.value = text; textArea.style.position = "fixed"; textArea.style.opacity = "0";
             document.body.appendChild(textArea); textArea.focus(); textArea.select();
-            try { document.execCommand('copy'); showToast(); } catch (ex) {}
+            try { document.execCommand('copy'); showToast(customMsg); } catch (ex) {}
             document.body.removeChild(textArea);
         }
 
-        function showToast() {
+        function showToast(msg = '复制成功', iconName = 'check-circle', color = '#34c759') {
             clearTimeout(toastTimeout);
             const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            
+            const iconEl = document.getElementById('toast-icon');
+            iconEl.setAttribute('data-lucide', iconName);
+            iconEl.style.color = color;
+            lucide.createIcons(); // 刷新图标
+
             t.classList.add('show');
-            toastTimeout = setTimeout(() => t.classList.remove('show'), 2000);
+            toastTimeout = setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         renderCards();

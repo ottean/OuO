@@ -99,7 +99,7 @@
     position: fixed;
     top: 20px;
     left: 20px;
-    z-index: 9999; /* 确保在最顶层 */
+    z-index: 9999; 
     display: flex;
     align-items: center;
     gap: 6px;
@@ -120,12 +120,11 @@
 
 .header-pill:hover {
     background: rgba(255, 255, 255, 0.8);
-    transform: translateX(-4px); /* 悬浮时微微向左滑动，提示返回 */
+    transform: translateX(-4px); 
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     color: #333;
 }
 
-/* 手机端适配稍微改小一点 */
 @media (max-width: 480px) {
     .header-pill {
         top: 15px;
@@ -668,6 +667,38 @@
     flex-shrink: 0;
     box-shadow: 0 0 0 1.5px rgba(255,255,255,0.5);
   }
+
+  /* 导入弹窗样式 */
+  .import-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+    opacity: 0; visibility: hidden; transition: all 0.2s;
+  }
+  .import-overlay.active { opacity: 1; visibility: visible; }
+  .import-modal {
+    background: var(--glass-bg, rgba(255,255,255,0.9)); border: 1px solid var(--glass-border, rgba(255,255,255,0.6));
+    padding: 24px; border-radius: var(--radius, 20px); width: 90%; max-width: 340px;
+    box-shadow: 0 10px 40px var(--glass-shadow, rgba(0,0,0,0.1));
+    transform: translateY(20px); transition: transform 0.2s; display: flex; flex-direction: column; gap: 16px;
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  .import-overlay.active .import-modal { transform: translateY(0); }
+  .import-modal h3 { font-size: 16px; text-align: center; color: var(--text); margin: 0; font-weight: 600; }
+  .import-modal p { font-size: 11px; text-align: center; color: var(--text-muted); margin-bottom: 5px; }
+  .import-input {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-sm, 12px);
+    border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.6);
+    font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s;
+  }
+  .import-input:focus { border-color: var(--accent); background: rgba(255,255,255,0.9); }
+  .import-actions { display: flex; gap: 10px; }
+  .import-actions button {
+    flex: 1; padding: 10px; border-radius: var(--radius-sm, 12px); border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .btn-imp-cancel { background: rgba(0,0,0,0.05); color: var(--text-soft); }
+  .btn-imp-confirm { background: var(--accent, #a855f7); color: #fff; }
 
 
   /* ╔══════════════════════════════════════════════════════╗
@@ -1419,6 +1450,38 @@
       border-top: 1px solid rgba(163,212,172,0.6) !important;
     }
   }
+
+  /* 导入口令弹窗样式 */
+  .import-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+    opacity: 0; visibility: hidden; transition: all 0.2s;
+  }
+  .import-overlay.active { opacity: 1; visibility: visible; }
+  .import-modal {
+    background: var(--glass-bg, rgba(255,255,255,0.9)); border: 1px solid var(--glass-border, rgba(255,255,255,0.6));
+    padding: 24px; border-radius: var(--radius, 20px); width: 90%; max-width: 340px;
+    box-shadow: 0 10px 40px var(--glass-shadow, rgba(0,0,0,0.1));
+    transform: translateY(20px); transition: transform 0.2s; display: flex; flex-direction: column; gap: 16px;
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  .import-overlay.active .import-modal { transform: translateY(0); }
+  .import-modal h3 { font-size: 16px; text-align: center; color: var(--text); margin: 0; font-weight: 600; }
+  .import-modal p { font-size: 11px; text-align: center; color: var(--text-muted); margin-bottom: 5px; }
+  .import-input {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-sm, 12px);
+    border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.6);
+    font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s;
+  }
+  .import-input:focus { border-color: var(--accent); background: rgba(255,255,255,0.9); }
+  .import-actions { display: flex; gap: 10px; }
+  .import-actions button {
+    flex: 1; padding: 10px; border-radius: var(--radius-sm, 12px); border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .btn-imp-cancel { background: rgba(0,0,0,0.05); color: var(--text-soft); }
+  .btn-imp-confirm { background: var(--accent, #a855f7); color: #fff; }
 </style>
 </head>
 <body>
@@ -1520,14 +1583,11 @@
     <div class="entry-count">共 <strong id="count">0</strong> 条记录</div>
     
     <div style="display: flex; gap: 8px;">
-      <!-- 隐藏的文件上传输入框 -->
-      <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
-      
-      <!-- 导入/导出按钮 -->
-      <button class="btn-sort" onclick="document.getElementById('import-file').click()" title="导入数据">
+      <!-- 导入/导出口令按钮 -->
+      <button class="btn-sort" onclick="openImportModal()" title="导入同步口令">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12V4m0 0L5 7m3-3l3 3M2 14h12"/></svg>
       </button>
-      <button class="btn-sort" onclick="exportData()" title="导出备份">
+      <button class="btn-sort" onclick="exportData()" title="生成同步口令">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4v8m0 0l-3-3m3 3l3-3M2 14h12"/></svg>
       </button>
 
@@ -1548,6 +1608,19 @@
 
 </div>
 
+<!-- 导入弹窗 -->
+<div class="import-overlay" id="importModal">
+  <div class="import-modal">
+    <h3>导入同步口令</h3>
+    <p>口令有效期为 30 分钟</p>
+    <input type="text" id="import-token" class="import-input" placeholder="粘贴 ZOZO-CALC- 开头的口令">
+    <div class="import-actions">
+      <button class="btn-imp-cancel" onclick="closeImportModal()">取消</button>
+      <button class="btn-imp-confirm" onclick="parseToken()">解析导入</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let entries = JSON.parse(localStorage.getItem('mt-v4') || '[]');
 let isSorted = false;
@@ -1559,13 +1632,11 @@ function toggleThemeMenu(ev) {
   const menu = document.getElementById('theme-menu');
   const btn = ev.currentTarget;
   menu.classList.toggle('open');
-  // Anime UI active state logic for button
   if (document.body.dataset.theme === 'kawaii') {
     btn.classList.toggle('pressed', menu.classList.contains('open'));
   }
 }
 
-// Close menu when clicking outside
 document.addEventListener('click', (ev) => {
   const menu = document.getElementById('theme-menu');
   if (menu && menu.classList.contains('open') && !ev.target.closest('.theme-dropdown')) {
@@ -1575,7 +1646,6 @@ document.addEventListener('click', (ev) => {
 });
 
 function setTheme(name) {
-  // Safe fallback for old localStorages
   if (name === 'terminal' || name === 'zhuque') name = 'minimal';
   document.body.dataset.theme = name;
   localStorage.setItem('mt-theme', name);
@@ -1589,14 +1659,12 @@ function setTheme(name) {
   }
 }
 
-// Init theme on load
 (function() {
   let saved = localStorage.getItem('mt-theme') || 'glass';
   if (saved === 'terminal' || saved === 'zhuque') saved = 'minimal';
   setTheme(saved);
 })();
 
-// ── channel → color index map ──
 const chColorMap = {};
 let chColorNext = 0;
 const CH_COLORS_COUNT = 10;
@@ -1696,14 +1764,12 @@ function render() {
     const ratio = safeEval(e.ratio) || 0;
     const price = safeEval(e.price) || 0;
     
-    // 获取颜色编号，赋值给CSS变量
     const ci = getChColor(e.source);
     const isEditing = editingId === e.id;
 
     const card = document.createElement('div');
     card.className = 'model-card' + (isEditing ? ' open' : '');
     card.style.animationDelay = (i * 0.04) + 's';
-    // 核心修改：利用 CSS 变量承载主题动态色彩
     card.style.setProperty('--card-color', `var(--ch-color-${ci})`);
     card.dataset.id = e.id;
 
@@ -1786,7 +1852,7 @@ function render() {
 
 function calcLive(input) {
   const price = parseFloat(input.dataset.price);
-  const quota = safeEval(input.value); // 现在输入的值代表剩余额度
+  const quota = safeEval(input.value); 
   const resultEl = input.closest('.calc-col').querySelector('.calc-result');
   
   if (!quota || !price) { 
@@ -1794,8 +1860,6 @@ function calcLive(input) {
     resultEl.className = 'calc-result'; 
     return; 
   }
-  
-  // 直接使用：剩余额度 / 每次单价
   const n = Math.floor(quota / price);
   resultEl.textContent = n.toLocaleString() + ' 次可用';
   resultEl.className = 'calc-result hit';
@@ -1889,61 +1953,80 @@ document.addEventListener('keydown', ev => {
   if (ev.key === 'Escape' && editingId) { editingId = null; render(); }
 });
 
-// ── 导入/导出功能 ──
+// ── 导入/导出无密码口令功能 (30分钟限时) ──
 
-// 导出为 JSON 文件
-function exportData() {
-  if (entries.length === 0) return alert('当前没有可导出的记录 🫧');
-  
-  const dataStr = JSON.stringify(entries, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ModelTracker_Backup_${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+// 解决 btoa 无法处理中文 Unicode 的问题
+function utoa(str) { return btoa(unescape(encodeURIComponent(str))); }
+function atou(str) { return decodeURIComponent(escape(atob(str))); }
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('✨ 导出成功！\n\n一串限时 30 分钟的同步口令已复制到剪贴板，请直接去另一台设备粘贴导入。');
+    }).catch(() => fallbackCopy(text));
+  } else { fallbackCopy(text); }
 }
 
-// 从 JSON 文件导入
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try {
+    document.execCommand('copy');
+    alert('✨ 导出成功！\n\n一串限时 30 分钟的同步口令已复制到剪贴板，请直接去另一台设备粘贴导入。');
+  } catch(e) {
+    alert('复制失败，请手动复制以下口令:\n\n' + text);
+  }
+  document.body.removeChild(ta);
+}
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const importedData = JSON.parse(e.target.result);
-      
-      // 简单的数据格式校验
-      if (!Array.isArray(importedData)) throw new Error('格式不正确');
-      
-      const confirmMsg = `成功读取 ${importedData.length} 条记录。\n\n点击【确定】覆盖当前所有数据\n点击【取消】将新数据追加到列表后面`;
-      
-      if (confirm(confirmMsg)) {
-        entries = importedData; // 覆盖
-      } else {
-        // 追加并去重 (基于 ID)
-        const existingIds = new Set(entries.map(item => item.id));
-        const newEntries = importedData.filter(item => !existingIds.has(item.id));
-        entries = [...newEntries, ...entries];
-      }
-      
-      save();
-      render();
-      alert('导入成功！✨');
-    } catch (err) {
-      alert('导入失败：文件格式不正确或已损坏。请确保是之前导出的 JSON 文件。');
-    } finally {
-      // 清空 input，允许重复导入同一个文件
-      event.target.value = ''; 
+// 导出为口令
+function exportData() {
+  if (entries.length === 0) return alert('当前没有可导出的记录 🫧');
+  const pack = { t: Date.now(), d: entries };
+  const token = 'ZOZO-CALC-' + utoa(JSON.stringify(pack));
+  copyToClipboard(token);
+}
+
+// 打开/关闭导入弹窗
+function openImportModal() {
+  document.getElementById('import-token').value = '';
+  document.getElementById('importModal').classList.add('active');
+}
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('active');
+}
+
+// 解析导入
+function parseToken() {
+  const token = document.getElementById('import-token').value.trim();
+  if (!token) return alert('口令不能为空哦！');
+  if (!token.startsWith('ZOZO-CALC-')) return alert('口令格式错误，应该以 ZOZO-CALC- 开头！');
+  
+  try {
+    const base64 = token.replace('ZOZO-CALC-', '');
+    const pack = JSON.parse(atou(base64));
+    
+    // 检查是否超过 30 分钟 (30 * 60 * 1000 = 1800000 毫秒)
+    if (Date.now() - pack.t > 1800000) throw new Error('口令已过期 (超过30分钟)');
+    
+    const importedData = pack.d;
+    if (!Array.isArray(importedData)) throw new Error('数据格式错误');
+
+    if (confirm(`🔓 解析成功！共 ${importedData.length} 条记录。\n\n点击【确定】覆盖当前所有数据\n点击【取消】追加到列表后面`)) {
+      entries = importedData;
+    } else {
+      const existingIds = new Set(entries.map(item => item.id));
+      const newEntries = importedData.filter(item => !existingIds.has(item.id));
+      entries = [...newEntries, ...entries];
     }
-  };
-  reader.readAsText(file);
+    
+    save(); 
+    render(); 
+    closeImportModal();
+    alert('导入成功！✨');
+  } catch (e) {
+    alert('解析失败：' + e.message);
+  }
 }
 
 render();

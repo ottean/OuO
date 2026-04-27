@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>青简 - 沉浸式小说创作</title>
+    <title>Zoの书籍收藏室</title>
     
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入强大的文本压缩引擎 -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 
     <style>
         :root {
@@ -267,13 +269,22 @@
     <!-- ================= 书架 ================= -->
     <div id="page-bookshelf" class="page base">
         <div class="nav-bar">
-            <button class="icon-btn" onclick="openSyncSheet()">
-                <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-.96l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l-2.11-1.63Z"/></svg>
-            </button>
-            <div class="nav-title">我的书架</div>
-            <button class="icon-btn" onclick="createNewBook()">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>
-            </button>
+            <!-- 返回百宝箱按钮 (完美对齐 iOS 风格) -->
+            <a href="index.html" class="text-btn" style="text-decoration:none; padding:0; display:flex; align-items:center; gap:4px; font-weight:600; color:var(--accent);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                返回Zoの百宝箱
+            </a>
+            
+            <div class="nav-title">Zoの书架</div>
+            
+            <div style="display:flex; gap:8px;">
+                <button class="icon-btn" onclick="openSyncSheet()">
+                    <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-.96l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l-2.11-1.63Z"/></svg>
+                </button>
+                <button class="icon-btn" onclick="createNewBook()">
+                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>
+                </button>
+            </div>
         </div>
         <div class="bookshelf-grid" id="bookshelf-grid"></div>
     </div>
@@ -352,7 +363,7 @@
     <div class="sheet-handle"></div>
     <div style="text-align: center; font-size: 17px; font-weight: 600; margin-bottom: 8px;">数据通行码</div>
     <div style="text-align: center; font-size: 12px; color: var(--text-sub); margin-bottom: 20px;">跨设备迁移利器，复制或粘贴以覆盖数据</div>
-    <textarea class="code-area" id="sync-code" placeholder="在此粘贴通行码以导入，或点击下方生成导出..."></textarea>
+    <textarea class="code-area" id="sync-code" placeholder="在此粘贴 ZOZOB- 开头的通行码以导入..."></textarea>
     <div class="btn-row">
         <button class="btn-secondary" onclick="exportData()">生成导出</button>
         <button class="btn-primary" onclick="importData()">粘贴覆盖</button>
@@ -642,10 +653,7 @@
         
         if(prevPage.id === 'page-bookshelf') renderBooks();
         if(prevPage.id === 'page-toc') renderChapters();
-        if(prevPage.id === 'page-reader') {
-            // 这里不调用 refreshReaderDom，因为我们希望保留滚动进度
-            // 只需要确保退出菜单即可
-        }
+        if(prevPage.id === 'page-reader') {}
     }
 
     // --- 书架模块 ---
@@ -727,7 +735,6 @@
         if(!book) return;
         document.getElementById('book-title-editor').value = book.title;
         
-        // 渲染继续阅读按钮
         const readingZone = document.getElementById('continue-reading-zone');
         readingZone.innerHTML = '';
         if (book.lastReadChapId) {
@@ -795,11 +802,8 @@
     }
 
     // --- 沉浸式阅读器模块 ---
-    // resumePos 决定是否要恢复上次的滚动位置
     function enterReader(chapId, resumePos = false) {
         curChapId = chapId;
-        
-        // 记录一下：这是我们最新的阅读章
         const book = appData.find(b => b.id === curBookId);
         if(book) {
             book.lastReadChapId = curChapId;
@@ -821,11 +825,9 @@
         document.getElementById('r-top-booktitle').innerText = book.title;
         document.getElementById('r-title-text').innerText = chap.title || '无标题';
         
-        // 执行终极渲染
         const renderedHTML = renderNovelContent(chap.content);
         document.getElementById('r-body-text').innerHTML = renderedHTML;
         
-        // 恢复或重置滚动进度
         setTimeout(() => {
             const scrollArea = document.getElementById('reader-scroll');
             if(resumePos && book.lastReadChapId === curChapId && book.lastScrollPos) {
@@ -867,12 +869,9 @@
         
         if(targetIndex >= 0 && targetIndex < book.chapters.length) {
             curChapId = book.chapters[targetIndex].id;
-            
-            // 切章相当于新开一章，重置进度
             book.lastReadChapId = curChapId;
             book.lastScrollPos = 0;
             saveLocal();
-
             refreshReaderDom(false); 
         }
     }
@@ -887,11 +886,9 @@
             el.innerText = `${idx + 1}. ${chap.title || '无标题'}`;
             el.onclick = () => {
                 curChapId = chap.id;
-                
                 book.lastReadChapId = curChapId;
                 book.lastScrollPos = 0;
                 saveLocal();
-
                 refreshReaderDom(false);
                 closeAllSheets();
                 document.getElementById('r-header').classList.remove('show');
@@ -937,7 +934,7 @@
         setTimeout(() => hint.classList.remove('show'), 2000);
     }
 
-    // --- Sheets 通用控制 ---
+    // --- 极简压缩 & 限时同步模块 ---
     function openSyncSheet() {
         document.getElementById('sync-code').value = '';
         document.getElementById('sheet-overlay').classList.add('show');
@@ -949,25 +946,84 @@
         document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('show'));
     }
 
-    function exportData() {
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✨ 导出成功！\n\n压缩版口令(限时30分钟)已复制到剪贴板，快去另一台设备粘贴吧。');
+            }).catch(() => fallbackCopy(text));
+        } else { fallbackCopy(text); }
+    }
+
+    function fallbackCopy(text) {
+        const ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta); ta.select();
         try {
-            const code = btoa(encodeURIComponent(JSON.stringify(appData))); 
-            document.getElementById('sync-code').value = code;
-            document.getElementById('sync-code').select(); 
-            alert('导出码已生成，已自动全选，请复制保存。');
-        } catch (e) { alert('生成失败。'); }
+            document.execCommand('copy');
+            alert('✨ 导出成功！\n\n压缩版口令(限时30分钟)已复制到剪贴板，快去另一台设备粘贴吧。');
+        } catch(e) {
+            alert('复制失败，请手动复制输入框内的口令。');
+        }
+        document.body.removeChild(ta);
+    }
+
+    function exportData() {
+        if (appData.length === 0) return alert('当前没有书籍可以导出 🫧');
+        
+        // 极简瘦身，书籍数据可能很大，尽量缩短 key
+        const mini = appData.map(b => ({
+            i: b.id,
+            t: b.title,
+            l: b.lastReadChapId,
+            s: b.lastScrollPos,
+            c: b.chapters.map(ch => ({ i: ch.id, t: ch.title, c: ch.content }))
+        }));
+        const pack = { t: Date.now(), d: mini };
+        
+        // LZ-String 航天级压缩
+        const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(pack));
+        const token = 'ZOZOB-' + compressed;
+        
+        // 顺便填入输入框作为兜底
+        document.getElementById('sync-code').value = token;
+        copyToClipboard(token);
     }
 
     function importData() {
-        const code = document.getElementById('sync-code').value.trim();
-        if(!code) return alert('请粘贴通行码！');
-        if(confirm('导入将覆盖现有全部数据，确认继续？')) {
-            try {
-                const parsed = JSON.parse(decodeURIComponent(atob(code)));
-                if(Array.isArray(parsed)) {
-                    appData = parsed; saveLocal(); renderBooks(); closeAllSheets();
-                } else throw new Error();
-            } catch (e) { alert('通行码无效或损坏。'); }
+        const token = document.getElementById('sync-code').value.trim();
+        if(!token) return alert('请先粘贴口令！');
+        if(!token.startsWith('ZOZOB-')) return alert('口令格式错误，应以 ZOZOB- 开头！');
+
+        try {
+            const compressed = token.replace('ZOZOB-', '');
+            const jsonStr = LZString.decompressFromEncodedURIComponent(compressed);
+            if (!jsonStr) throw new Error('口令已损坏');
+            
+            const pack = JSON.parse(jsonStr);
+            if (Date.now() - pack.t > 1800000) throw new Error('口令已过期 (超过30分钟)');
+            
+            // 还原数据结构
+            const importedData = pack.d.map(b => ({
+                id: b.i,
+                title: b.t,
+                lastReadChapId: b.l,
+                lastScrollPos: b.s,
+                chapters: b.c.map(ch => ({ id: ch.i, title: ch.t, content: ch.c }))
+            }));
+
+            if(confirm(`🔓 解析成功！共包含 ${importedData.length} 本书籍。\n\n点击【确定】将覆盖当前所有数据\n点击【取消】将新书追加到书架后面`)) {
+                appData = importedData;
+            } else {
+                const existingIds = new Set(appData.map(item => item.id));
+                const newEntries = importedData.filter(item => !existingIds.has(item.id));
+                appData = [...newEntries, ...appData];
+            }
+            
+            saveLocal(); 
+            renderBooks(); 
+            closeAllSheets();
+            alert('导入成功！✨');
+        } catch (e) {
+            alert('解析失败：' + e.message);
         }
     }
 
